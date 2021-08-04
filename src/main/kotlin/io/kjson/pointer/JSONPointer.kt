@@ -1,15 +1,45 @@
+/*
+ * @(#) JSONPointer.kt
+ *
+ * kjson-pointer  JSON Pointer for Kotlin
+ * Copyright (c) 2021 Peter Wall
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package io.kjson.pointer
 
 import io.kjson.JSONArray
 import io.kjson.JSONObject
 import io.kjson.JSONValue
 
-import net.pwall.pipeline.AbstractIntPipeline
-import net.pwall.pipeline.IntAcceptor
 import net.pwall.pipeline.StringAcceptor
 import net.pwall.pipeline.codec.CodePoint_UTF8
 import net.pwall.pipeline.codec.UTF8_CodePoint
+import net.pwall.pipeline.uri.URIDecoder
+import net.pwall.pipeline.uri.URIEncoder
 
+/**
+ * JSON Pointer.
+ *
+ * @author  Peter Wall
+ */
 class JSONPointer internal constructor(private val tokens: Array<String>) {
 
     constructor(pointer: String) : this(parseString(pointer))
@@ -22,14 +52,12 @@ class JSONPointer internal constructor(private val tokens: Array<String>) {
         val len = tokens.size
         if (len == 0)
             throw JSONPointerException("Can't get parent of root JSON Pointer")
-        val newArray = Array(len - 1) { i -> tokens[i] }
-        return JSONPointer(newArray)
+        return JSONPointer(Array(len - 1) { i -> tokens[i] })
     }
 
     fun child(string: String): JSONPointer {
         val len = tokens.size
-        val newArray = Array(len + 1) { i -> if (i < len) tokens[i] else string }
-        return JSONPointer(newArray)
+        return JSONPointer(Array(len + 1) { i -> if (i < len) tokens[i] else string })
     }
 
     fun child(index: Int): JSONPointer {
@@ -61,7 +89,7 @@ class JSONPointer internal constructor(private val tokens: Array<String>) {
                 }
             }
             value is JSONArray -> {
-                for ( i in value.indices)
+                for (i in value.indices)
                     child(i).locateChild(value[i], target)?.let { return it }
             }
         }
@@ -78,8 +106,6 @@ class JSONPointer internal constructor(private val tokens: Array<String>) {
     companion object {
 
         val root = JSONPointer(emptyArray())
-
-        const val hexChars = "0123456789ABCDEF"
 
         fun find(pointer: String, base: JSONValue?) = find(parseString(pointer), base)
 
@@ -234,9 +260,6 @@ class JSONPointer internal constructor(private val tokens: Array<String>) {
             }
         }
 
-        private fun isUnreservedURI(ch: Char) =
-                ch in 'A'..'Z' || ch in 'a'..'z' || ch in '0'..'9' || ch == '-' || ch == '.' || ch == '_' || ch == '~'
-
         fun fromURIFragment(fragment: String): JSONPointer {
             if (fragment.isEmpty() || fragment[0] != '#')
                 throw JSONPointerException("Illegal URI fragment $fragment")
@@ -250,61 +273,6 @@ class JSONPointer internal constructor(private val tokens: Array<String>) {
                 throw JSONPointerException("Illegal URI fragment $fragment")
             }
             return JSONPointer(pipeline.result)
-        }
-
-    }
-
-    class URIEncoder(downstream: IntAcceptor<String>) : AbstractIntPipeline<String>(downstream) {
-
-        override fun acceptInt(value: Int) {
-            if (!isUnreservedURI(value.toChar())) {
-                emit('%'.code)
-                emit(hexChars[(value shr 4) and 0xF].code)
-                emit(hexChars[value and 0xF].code)
-            }
-            else
-                emit(value)
-        }
-
-    }
-
-    class URIDecoder(downstream: IntAcceptor<String>) : AbstractIntPipeline<String>(downstream) {
-
-        enum class State { NORMAL, FIRST, SECOND }
-
-        private var state = State.NORMAL
-        private var char: Int = 0
-
-        override fun acceptInt(value: Int) {
-            when (state) {
-                State.NORMAL -> {
-                    if (value == '%'.code) {
-                        char = 0
-                        state = State.FIRST
-                    }
-                    else
-                        emit(value)
-                }
-                State.FIRST -> {
-                    char = fromHex(value.toChar()) shl 4
-                    state = State.SECOND
-                }
-                State.SECOND -> {
-                    emit(char or fromHex(value.toChar()))
-                    state = State.NORMAL
-                }
-            }
-        }
-
-        override fun isStageComplete(): Boolean = state == State.NORMAL
-
-        private fun fromHex(ch: Char): Int {
-            return when (ch) {
-                in '0'..'9' -> ch.code - '0'.code
-                in 'A'..'Z' -> ch.code - 'A'.code + 10
-                in 'a'..'z' -> ch.code - 'a'.code + 10
-                else -> throw IllegalArgumentException("Illegal hex character - $ch")
-            }
         }
 
     }
