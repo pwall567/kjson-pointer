@@ -2,7 +2,9 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [Unreleased]
+## [0.2] - 2021-08-04
+### Added
+- `JSONReference`: new
 ### Changed
 - Kotlin files: added comments and kdoc
 - `JSONPointer`: switched to use pipelines URI encode/decode

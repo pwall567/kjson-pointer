@@ -9,6 +9,8 @@ Kotlin implementation of [JSON Pointer](https://tools.ietf.org/html/rfc6901).
 
 ## Quick Start
 
+### `JSONPointer`
+
 To create a JSON Pointer:
 ```kotlin
         val pointer = JSONPointer("/prop1/0")
@@ -49,25 +51,70 @@ To create a pointer to a specified child value within a structure:
 ```
 (This will perform a depth-first search of the JSON structure, so it should be used only when there is no alternative.)
 
+### `JSONReference`
+
+A `JSONReference` is a combination of a `JSONPointer` and a `JSONValue`.
+This can be valuable when navigating around a complex tree &ndash; it removes the necessity to pass around both a
+pointer and the base value to which it refers, and it pre-calculates the destination value (and its validity).
+
+To create a `JSONReference` to the root of an object:
+```kotlin
+        val ref = JSONReference(base)
+```
+
+Or to create a reference to a location in an object specified by a pointer:
+```kotlin
+        val ref = JSONPointer("/field") ref base
+```
+
+The `parent()` and `child()` operations work on `JSONReference`s similarly to their `JSONPointer` equivalents.
+
+To get the value from a `JSONReference` (the value within the base object pointed to by the pointer part of the
+reference):
+```kotlin
+        val value: JSONValue? = ref.value // may be null
+```
+
+To test whether the reference is valid, that is, the pointer refers to a valid location in the base object:
+```kotlin
+        if (ref.valid) {
+            // the reference can be taken to be valid
+        }
+```
+
+To test whether the reference has a nominated child:
+```kotlin
+        if (ref.hasChild(name)) { // or index
+            // code to make use of ref.child(name)
+        }
+```
+
+To create a reference to a specified target child value:
+```kotlin
+        val childRef = baseRef.locateChild(target)
+```
+(This will perform a depth-first search of the JSON structure, so it should be used only when there is no alternative.)
+
+
 ## Dependency Specification
 
-The latest version of the library is 0.1, and it may be obtained from the Maven Central repository.
+The latest version of the library is 0.2, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>0.1</version>
+      <version>0.2</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:0.1'
+    implementation 'io.kjson:kjson-pointer:0.2'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:0.1")
+    implementation("io.kjson:kjson-pointer:0.2")
 ```
 
 Peter Wall

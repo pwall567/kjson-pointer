@@ -40,13 +40,13 @@ import net.pwall.pipeline.uri.URIEncoder
  *
  * @author  Peter Wall
  */
-class JSONPointer internal constructor(private val tokens: Array<String>) {
+class JSONPointer internal constructor(internal val tokens: Array<String>) {
 
     constructor(pointer: String) : this(parseString(pointer))
 
-    fun find(base: JSONValue?) = Companion.find(tokens, base)
+    fun find(base: JSONValue?) = find(tokens, base)
 
-    infix fun existsIn(json: JSONValue?): Boolean = Companion.existsIn(tokens, json)
+    infix fun existsIn(json: JSONValue?): Boolean = existsIn(tokens, json)
 
     fun parent(): JSONPointer {
         val len = tokens.size
@@ -95,6 +95,9 @@ class JSONPointer internal constructor(private val tokens: Array<String>) {
         }
         return null
     }
+
+    infix fun ref(base: JSONValue?) = if (existsIn(tokens, base)) JSONReference(base, tokens, true, find(tokens, base))
+            else JSONReference(base, tokens, false, null)
 
     override fun equals(other: Any?): Boolean =
         this === other || other is JSONPointer && tokens.contentEquals(other.tokens)
