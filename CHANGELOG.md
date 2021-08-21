@@ -2,6 +2,10 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [1.0] - 2021-08-22
+### Changed
+- `JSONPointer`: made tokens visible to other classes
+
 ## [0.2] - 2021-08-04
 ### Added
 - `JSONReference`: new

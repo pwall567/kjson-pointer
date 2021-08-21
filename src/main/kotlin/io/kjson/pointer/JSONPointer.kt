@@ -40,7 +40,7 @@ import net.pwall.pipeline.uri.URIEncoder
  *
  * @author  Peter Wall
  */
-class JSONPointer internal constructor(internal val tokens: Array<String>) {
+class JSONPointer internal constructor(val tokens: Array<String>) {
 
     constructor(pointer: String) : this(parseString(pointer))
 

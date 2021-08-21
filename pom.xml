@@ -4,11 +4,11 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>kjson-pointer</artifactId>
-  <version>0.2</version>
+  <version>1.0</version>
   <name>JSON Pointer for Kotlin</name>
   <description>JSON Pointer functionality for Kotlin</description>
   <packaging>jar</packaging>
-  <url>https://github.com/pwall567/kjson-core</url>
+  <url>https://github.com/pwall567/kjson-pointer</url>
 
   <parent>
     <groupId>io.kjson</groupId>
@@ -51,9 +51,9 @@
 
   <pluginRepositories>
     <pluginRepository>
-      <id>jcenter</id>
-      <name>JCenter</name>
-      <url>https://jcenter.bintray.com/</url>
+      <id>central</id>
+      <name>Maven Central</name>
+      <url>https://repo1.maven.org/maven2/</url>
     </pluginRepository>
   </pluginRepositories>
 
@@ -61,7 +61,7 @@
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-core</artifactId>
-      <version>0.2</version>
+      <version>1.0</version>
     </dependency>
     <dependency>
       <groupId>net.pwall.util</groupId>
