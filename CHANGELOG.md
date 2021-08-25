@@ -2,6 +2,10 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [1.1] - 2021-08-25
+### Changed
+- `pom.xml`: bumped dependency version
+
 ## [1.0] - 2021-08-22
 ### Changed
 - `JSONPointer`: made tokens visible to other classes
