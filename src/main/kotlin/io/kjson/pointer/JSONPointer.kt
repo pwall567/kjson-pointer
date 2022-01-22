@@ -2,7 +2,7 @@
  * @(#) JSONPointer.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2021 Peter Wall
+ * Copyright (c) 2021, 2022 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -127,7 +127,7 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
                             throw JSONPointerException(
                                     "Can't dereference end-of-array JSON Pointer ${toStr1(tokens, i)}")
                         val index = checkIndex(token) { "Illegal array index in JSON Pointer ${toStr1(tokens, i)}" }
-                        if (index < 0 || index > result.size)
+                        if (index < 0 || index >= result.size)
                             throw JSONPointerException("Array index out of range in JSON Pointer ${toStr1(tokens, i)}")
                         result[index]
                     }
