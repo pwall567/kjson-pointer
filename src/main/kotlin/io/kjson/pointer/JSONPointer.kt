@@ -29,6 +29,8 @@ import io.kjson.JSONArray
 import io.kjson.JSONObject
 import io.kjson.JSONValue
 
+import net.pwall.pipeline.AbstractIntPipeline
+import net.pwall.pipeline.IntAcceptor
 import net.pwall.pipeline.StringAcceptor
 import net.pwall.pipeline.codec.CodePoint_UTF8
 import net.pwall.pipeline.codec.UTF8_CodePoint
@@ -48,11 +50,10 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
 
     infix fun existsIn(json: JSONValue?): Boolean = existsIn(tokens, json)
 
-    fun parent(): JSONPointer {
-        val len = tokens.size
-        if (len == 0)
-            throw JSONPointerException("Can't get parent of root JSON Pointer")
-        return JSONPointer(Array(len - 1) { i -> tokens[i] })
+    fun parent(): JSONPointer = when (val len = tokens.size) {
+        0 -> throw JSONPointerException("Can't get parent of root JSON Pointer")
+        1 -> root
+        else -> JSONPointer(Array(len - 1) { i -> tokens[i] })
     }
 
     fun child(string: String): JSONPointer {
@@ -72,10 +73,10 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
     fun toURIFragment(): String {
         val sb = StringBuilder()
         sb.append('#')
-        val pipeline = CodePoint_UTF8(URIEncoder(StringAcceptor(sb)))
+        val pipeline = EscapePipeline(CodePoint_UTF8(SchemaURIEncoder(StringAcceptor(sb))))
         for (token in tokens) {
             sb.append('/')
-            pipeline.accept(escape(token))
+            pipeline.accept(token)
         }
         return sb.toString()
     }
@@ -106,9 +107,43 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
 
     override fun toString(): String = toString(tokens, tokens.size)
 
+    class SchemaURIEncoder<T>(next: IntAcceptor<T>) : AbstractIntPipeline<T>(next) {
+
+        override fun acceptInt(value: Int) {
+            if (URIEncoder.isUnreservedURI(value) || value == '$'.code)
+                emit(value)
+            else {
+                emit('%'.code)
+                emit(hexChars[(value shr 4) and 0xF].code)
+                emit(hexChars[value and 0xF].code)
+            }
+        }
+
+    }
+
+    class EscapePipeline<T>(next: IntAcceptor<T>) : AbstractIntPipeline<T>(next) {
+
+        override fun acceptInt(value: Int) {
+            when (value) {
+                '~'.code -> {
+                    emit('~'.code)
+                    emit('0'.code)
+                }
+                '/'.code -> {
+                    emit('~'.code)
+                    emit('1'.code)
+                }
+                else -> emit(value)
+            }
+        }
+
+    }
+
     companion object {
 
         val root = JSONPointer(emptyArray())
+        const val hexChars = "0123456789ABCDEF"
+        private const val emptyString = ""
 
         fun find(pointer: String, base: JSONValue?) = find(parseString(pointer), base)
 
@@ -192,6 +227,8 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
         private fun toStr1(tokens: Array<String>, n: Int) = toString(tokens, n + 1)
 
         fun toString(tokens: Array<String>, n: Int): String {
+            if (n == 0)
+                return emptyString
             return StringBuilder().apply {
                 for (i in 0 until n) {
                     append('/')
@@ -212,7 +249,8 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
                     break
                 i++
             }
-            val sb = StringBuilder(token.subSequence(0, i))
+            val sb = StringBuilder(len + 8)
+            sb.append(token, 0, i)
             while (true) {
                 when (ch) {
                     '~' -> sb.append("~0")
@@ -243,7 +281,8 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
                     break
                 i++
             }
-            val sb = StringBuilder(token.subSequence(0, i))
+            val sb = StringBuilder(len)
+            sb.append(token, 0, i)
             while (true) {
                 if (++i >= len)
                     throw JSONPointerException("Illegal token in JSON Pointer $token")

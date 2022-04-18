@@ -2,6 +2,11 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [1.7] - 2022-04-18
+### Changed
+- `JSONPointer`: minor optimisations
+- `pom.xml`: bumped dependency version
+
 ## [1.6] - 2022-01-28
 ### Changed
 - `pom.xml`: bumped dependency version
