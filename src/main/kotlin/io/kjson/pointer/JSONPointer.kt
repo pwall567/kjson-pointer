@@ -36,6 +36,7 @@ import net.pwall.pipeline.codec.CodePoint_UTF8
 import net.pwall.pipeline.codec.UTF8_CodePoint
 import net.pwall.pipeline.uri.URIDecoder
 import net.pwall.pipeline.uri.URIEncoder
+import net.pwall.util.IntOutput.output2Hex
 
 /**
  * JSON Pointer.
@@ -114,8 +115,7 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
                 emit(value)
             else {
                 emit('%'.code)
-                emit(hexChars[(value shr 4) and 0xF].code)
-                emit(hexChars[value and 0xF].code)
+                output2Hex(value, ::emit)
             }
         }
 
@@ -142,7 +142,6 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
     companion object {
 
         val root = JSONPointer(emptyArray())
-        const val hexChars = "0123456789ABCDEF"
         private const val emptyString = ""
 
         fun find(pointer: String, base: JSONValue?) = find(parseString(pointer), base)

@@ -2,6 +2,11 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [1.8] - 2022-05-01
+### Changed
+- `pom.xml`: bumped dependency version
+- `JSONPointer`: switched to use `int-output` library
+
 ## [1.7] - 2022-04-18
 ### Changed
 - `JSONPointer`: minor optimisations
