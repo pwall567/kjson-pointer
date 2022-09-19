@@ -98,25 +98,25 @@ To create a reference to a specified target child value:
 
 ## Dependency Specification
 
-The latest version of the library is 1.9.1, and it may be obtained from the Maven Central repository.
+The latest version of the library is 1.9.2, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>1.9.1</version>
+      <version>1.9.2</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:1.9.1'
+    implementation 'io.kjson:kjson-pointer:1.9.2'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:1.9.1")
+    implementation("io.kjson:kjson-pointer:1.9.2")
 ```
 
 Peter Wall
 
-2022-09-04
+2022-09-19
