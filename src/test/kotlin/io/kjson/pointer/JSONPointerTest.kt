@@ -2,7 +2,7 @@
  * @(#) JSONPointerTest.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2021 Peter Wall
+ * Copyright (c) 2021, 2022 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,6 @@
 
 package io.kjson.pointer
 
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -42,18 +41,16 @@ import io.kjson.JSONInt
 import io.kjson.JSONObject
 import io.kjson.JSONString
 import io.kjson.JSONValue
+import io.kjson.pointer.test.SampleJSON.testArray
+import io.kjson.pointer.test.SampleJSON.testNestedObject
+import io.kjson.pointer.test.SampleJSON.testObject
 
 class JSONPointerTest {
 
-    private lateinit var document: JSONValue
+    private val document: JSONValue = JSON.parseObject(File("src/test/resources/json-pointer-example.json").readText())
     private val string1 = JSONString("bar")
     private val string2 = JSONString("baz")
     private val array1 = JSONArray.of(string1, string2)
-    private val testArray = JSON.parseArray("""["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P"]""")
-
-    @BeforeTest fun setupDocument() {
-        document = JSON.parseObject(File("src/test/resources/json-pointer-example.json").readText())
-    }
 
     @Test fun `should give results shown in example in specification`() {
         assertSame(document, JSONPointer("").find(document))
@@ -201,7 +198,7 @@ class JSONPointerTest {
 
     @Test fun `should give correct error message on bad reference`() {
         assertFailsWith<JSONPointerException> { JSONPointer("/wrong/0").find(document) }.let {
-            expect("Can't resolve JSON Pointer /wrong") { it.message }
+            expect("Can't resolve JSON Pointer - \"/wrong\"") { it.message }
         }
     }
 
@@ -218,22 +215,22 @@ class JSONPointerTest {
 
     @Test fun `should reject invalid numeric index`() {
         assertFailsWith<JSONPointerException> { JSONPointer("/01").find(testArray) }.let {
-            expect("Illegal array index in JSON Pointer /01") { it.message }
+            expect("Illegal array index in JSON Pointer - \"/01\"") { it.message }
         }
         assertFailsWith<JSONPointerException> { JSONPointer("/").find(testArray) }.let {
-            expect("Illegal array index in JSON Pointer /") { it.message }
+            expect("Illegal array index in JSON Pointer - \"/\"") { it.message }
         }
         assertFailsWith<JSONPointerException> { JSONPointer("/A").find(testArray) }.let {
-            expect("Illegal array index in JSON Pointer /A") { it.message }
+            expect("Illegal array index in JSON Pointer - \"/A\"") { it.message }
         }
         assertFailsWith<JSONPointerException> { JSONPointer("/999999999").find(testArray) }.let {
-            expect("Illegal array index in JSON Pointer /999999999") { it.message }
+            expect("Illegal array index in JSON Pointer - \"/999999999\"") { it.message }
         }
         assertFailsWith<JSONPointerException> { JSONPointer("/-1").find(testArray) }.let {
-            expect("Illegal array index in JSON Pointer /-1") { it.message }
+            expect("Illegal array index in JSON Pointer - \"/-1\"") { it.message }
         }
         assertFailsWith<JSONPointerException> { JSONPointer("/99").find(testArray) }.let {
-            expect("Array index out of range in JSON Pointer /99") { it.message }
+            expect("Array index out of range in JSON Pointer - \"/99\"") { it.message }
         }
     }
 
@@ -287,6 +284,42 @@ class JSONPointerTest {
         val array4 = JSONPointer.parseString("/ab~1~0cd")
         expect(1) { array4.size }
         expect("ab/~cd") { array4[0] }
+    }
+
+    @Test fun `should find object using findObject`() {
+        val obj = JSONPointer("/field2").findObject(testNestedObject)
+        expect(JSONInt(99)) { obj["aaa"] }
+    }
+
+    @Test fun `should throw exception when findObject target is not an object`() {
+        assertFailsWith<JSONPointerException> { JSONPointer("/field1").findObject(testNestedObject) }.let {
+            expect("JSON Pointer does not point to object - \"/field1\"") { it.message }
+        }
+    }
+
+    @Test fun `should find array using findArray`() {
+        val obj = JSONPointer("/field2").findArray(testObject)
+        expect(JSONString("def")) { obj[1] }
+    }
+
+    @Test fun `should throw exception when findArray target is not an array`() {
+        assertFailsWith<JSONPointerException> { JSONPointer("/field1").findArray(testObject) }.let {
+            expect("JSON Pointer does not point to array - \"/field1\"") { it.message }
+        }
+    }
+
+    @Test fun `should find object using findOrNull`() {
+        val obj = JSONPointer("/field2").findOrNull(testObject)
+        assertTrue(obj is JSONArray)
+        expect(JSONString("def")) { obj[1] }
+        assertNull(JSONPointer("/nothing").findOrNull(testObject))
+    }
+
+    @Test fun `should find object using findOrNull companion object methods`() {
+        val obj = JSONPointer.findOrNull("/field2", testObject)
+        assertTrue(obj is JSONArray)
+        expect(JSONString("def")) { obj[1] }
+        assertNull(JSONPointer("/nothing").findOrNull(testObject))
     }
 
 }

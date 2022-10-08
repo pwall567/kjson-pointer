@@ -2,7 +2,7 @@
  * @(#) JSONReferenceTest.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2021 Peter Wall
+ * Copyright (c) 2021, 2022 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,11 +34,12 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.test.expect
 
-import io.kjson.JSON
 import io.kjson.JSONArray
 import io.kjson.JSONInt
 import io.kjson.JSONObject
 import io.kjson.JSONString
+import io.kjson.pointer.test.SampleJSON.testObject
+import io.kjson.pointer.test.SampleJSON.testString
 
 class JSONReferenceTest {
 
@@ -185,11 +186,6 @@ class JSONReferenceTest {
         val testReference1 = JSONPointer("/field2") ref testObject
         val testReference2 = JSONPointer("/field2") ref JSONObject.from(testObject)
         assertNotEquals(testReference1, testReference2)
-    }
-
-    companion object {
-        val testString = JSONString("test1")
-        val testObject = JSON.parseObject("""{"field1":123,"field2":["abc","def"]}""")
     }
 
 }

@@ -57,6 +57,8 @@ A `JSONReference` is a combination of a `JSONPointer` and a `JSONValue`.
 This can be valuable when navigating around a complex tree &ndash; it removes the necessity to pass around both a
 pointer and the base value to which it refers, and it pre-calculates the destination value (and its validity).
 
+(`JSONReference` has since been superseded by [`JSONRef`](#jsonref), and may eventually be deprecated.)
+
 To create a `JSONReference` to the root of an object:
 ```kotlin
         val ref = JSONReference(base)
@@ -95,28 +97,93 @@ To create a reference to a specified target child value:
 ```
 (This will perform a depth-first search of the JSON structure, so it should be used only when there is no alternative.)
 
+### `JSONRef`
+
+`JSONRef` is an evolution of the concept first implemented in [`JSONReference`](#jsonreference).
+Like the earlier class, it combines a `JSONPointer` with the object into which the pointer navigates, but as a
+parameterised class, it allows the target element to be accessed in a type-safe manner.
+
+The parameter class may be any of the `JSONValue` sealed interface types:
+- `JSONString`
+- `JSONInt`
+- `JSONLong`
+- `JSONDecimal`
+- `JSONNumber`: `JSONInt`, `JSONLong` or `JSONDecimal`
+- `JSONBoolean`
+- `JSONPrimitive`: `JSONString`, `JSONInt`, `JSONLong`, `JSONDecimal` or `JSONBoolean`
+- `JSONArray`
+- `JSONObject`
+- `JSONStructure`: `JSONArray` or `JSONObject`
+- `JSONValue`: any of the above types
+
+The usage of `JSONRef` is best explained be example:
+```kotlin
+    val json = JSON.parseObject("file.json")
+    val ref = JSONRef(json)
+```
+The value `ref` will be of type `JSONRef<JSONObject>`; it will be a reference to the root of the object tree.
+
+`JSONRef<J>` exposes three properties:
+
+| Name      | Type          | Description                              |
+|-----------|---------------|------------------------------------------|
+| `base`    | `JSONValue`   | The base JSON value                      |
+| `pointer` | `JSONPointer` | The `JSONPointer` to the referenced node |
+| `node`    | `J`           | The node (`J` a subclass of `JSONValue`) |
+
+To navigate to the `id` property of the object in the above example, expecting it to be a string:
+```kotlin
+    val idRef = ref.child<JSONString>("id")
+    val id = idRef.node
+```
+`idRef` will be of type `JSONRef<JSONString>`, and `id` will be of type `JSONString`.
+
+Now imagine that the object contains a property named `address`, which is an array of address line strings:
+```kotlin
+    val address = ref.child<JSONArray>("address")
+    val line0 = address.child<JSONString>(0).node
+```
+
+And to iterate over the address lines:
+```kotlin
+    address.forEach<JSONString> {
+        // within this code, "this" is a JSONRef<JSONString>, and "it" is an Int (the index)
+        println("Address line ${it + 1}: ${node.value}")
+    }
+```
+
+Or over the properties of an object:
+```kotlin
+    ref.forEachKey<JSONValue> {
+        // within this code, "this" is a JSONRef<JSONValue>, and "it" is a String (the object key / property name)
+    }
+```
+This also illustrates the use of `JSONValue` as the parameterised type, to allow for the case where properties are of
+different types.
+
+More documentation to follow&hellip;
 
 ## Dependency Specification
 
-The latest version of the library is 1.9.2, and it may be obtained from the Maven Central repository.
+The latest version of the library is 2.0, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>1.9.2</version>
+      <version>2.0</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:1.9.2'
+    implementation 'io.kjson:kjson-pointer:2.0'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:1.9.2")
+    implementation("io.kjson:kjson-pointer:2.0")
 ```
 
 Peter Wall
 
-2022-09-19
+2022-10-08

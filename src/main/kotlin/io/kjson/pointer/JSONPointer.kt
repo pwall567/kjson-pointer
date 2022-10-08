@@ -25,6 +25,8 @@
 
 package io.kjson.pointer
 
+import io.kjson.JSON.asArrayOrNull
+import io.kjson.JSON.asObjectOrNull
 import io.kjson.JSONArray
 import io.kjson.JSONObject
 import io.kjson.JSONValue
@@ -47,7 +49,15 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
 
     constructor(pointer: String) : this(parseString(pointer))
 
-    fun find(base: JSONValue?) = find(tokens, base)
+    fun find(base: JSONValue?): JSONValue? = find(tokens, base)
+
+    fun findOrNull(base: JSONValue?): JSONValue? = findOrNull(tokens, base)
+
+    fun findObject(base: JSONValue?): JSONObject = findOrNull(tokens, base).asObjectOrNull ?:
+            pointerError("JSON Pointer does not point to object", toString())
+
+    fun findArray(base: JSONValue?): JSONArray = findOrNull(tokens, base).asArrayOrNull ?:
+            pointerError("JSON Pointer does not point to array", toString())
 
     infix fun existsIn(json: JSONValue?): Boolean = existsIn(tokens, json)
 
@@ -71,15 +81,13 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
     val current: String?
         get() = if (tokens.isEmpty()) null else tokens[tokens.size - 1]
 
-    fun toURIFragment(): String {
-        val sb = StringBuilder()
-        sb.append('#')
-        val pipeline = EscapePipeline(CodePoint_UTF8(SchemaURIEncoder(StringAcceptor(sb))))
+    fun toURIFragment(): String = buildString {
+        append('#')
+        val pipeline = EscapePipeline(CodePoint_UTF8(SchemaURIEncoder(StringAcceptor(this))))
         for (token in tokens) {
-            sb.append('/')
+            append('/')
             pipeline.accept(token)
         }
-        return sb.toString()
     }
 
     fun locateChild(value: JSONValue?, target: JSONValue?): JSONPointer? {
@@ -153,19 +161,44 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
                 result = when (result) {
                     is JSONObject -> {
                         if (!result.containsKey(token))
-                            error(tokens, i + 1)
+                            pointerError("Can't resolve JSON Pointer", tokens, i + 1)
                         result[token]
                     }
                     is JSONArray -> {
                         if (token == "-")
-                            throw JSONPointerException(
-                                    "Can't dereference end-of-array JSON Pointer ${toStr1(tokens, i)}")
-                        val index = checkIndex(token) { "Illegal array index in JSON Pointer ${toStr1(tokens, i)}" }
+                            pointerError("Can't dereference end-of-array JSON Pointer", tokens, i + 1)
+                        val index = checkIndex(token, tokens, i + 1)
                         if (index < 0 || index >= result.size)
-                            throw JSONPointerException("Array index out of range in JSON Pointer ${toStr1(tokens, i)}")
+                            pointerError("Array index out of range in JSON Pointer", tokens, i + 1)
                         result[index]
                     }
-                    else -> error(tokens, i + 1)
+                    else -> pointerError("Can't resolve JSON Pointer", tokens, i + 1)
+                }
+            }
+            return result
+        }
+
+        fun findOrNull(pointer: String, base: JSONValue?) = findOrNull(parseString(pointer), base)
+
+        fun findOrNull(tokens: Array<String>, base: JSONValue?): JSONValue? {
+            var result = base
+            for (i in tokens.indices) {
+                val token = tokens[i]
+                result = when (result) {
+                    is JSONObject -> {
+                        if (!result.containsKey(token))
+                            return null
+                        result[token]
+                    }
+                    is JSONArray -> {
+                        if (!checkNumber(token))
+                            return null
+                        val index = token.toInt()
+                        if (index < 0 || index >= result.size)
+                            return null
+                        result[index]
+                    }
+                    else -> return null
                 }
             }
             return result
@@ -176,11 +209,11 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
         fun existsIn(tokens: Array<String>, base: JSONValue?): Boolean {
             var current: JSONValue? = base ?: return false
             for (token in tokens) {
-                when (current) {
+                current = when (current) {
                     is JSONObject -> {
                         if (!current.containsKey(token))
                             return false
-                        current = current[token]
+                        current[token]
                     }
                     is JSONArray -> {
                         if (!checkNumber(token))
@@ -188,7 +221,7 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
                         val index = token.toInt()
                         if (index < 0 || index >= current.size)
                             return false
-                        current = current[index]
+                        current[index]
                     }
                     else -> return false
                 }
@@ -196,13 +229,13 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
             return true
         }
 
-        private fun checkIndex(token: String, lazyMessage: () -> String): Int {
+        private fun checkIndex(token: String, tokens: Array<String>, tokenIndex: Int): Int {
             if (!checkNumber(token))
-                throw JSONPointerException(lazyMessage())
+                pointerError("Illegal array index in JSON Pointer", tokens, tokenIndex)
             return token.toInt()
         }
 
-        private fun checkNumber(token: String): Boolean {
+        internal fun checkNumber(token: String): Boolean {
             val len = token.length
             if (len < 1 || len > 8)
                 return false
@@ -219,21 +252,15 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
             }
         }
 
-        private fun error(tokens: Array<String>, tokenIndex: Int): Nothing {
-            throw JSONPointerException("Can't resolve JSON Pointer ${toString(tokens, tokenIndex)}")
-        }
-
-        private fun toStr1(tokens: Array<String>, n: Int) = toString(tokens, n + 1)
-
         fun toString(tokens: Array<String>, n: Int): String {
             if (n == 0)
                 return emptyString
-            return StringBuilder().apply {
+            return buildString {
                 for (i in 0 until n) {
                     append('/')
                     append(escape(tokens[i]))
                 }
-            }.toString()
+            }
         }
 
         fun escape(token: String): String {
@@ -266,7 +293,7 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
             if (string.isEmpty())
                 return emptyArray()
             if (string[0] != '/')
-                throw JSONPointerException("Illegal JSON Pointer $string")
+                pointerError("Illegal JSON Pointer", string)
             return string.substring(1).split('/').map { unescape(it) }.toTypedArray()
         }
 
@@ -284,11 +311,11 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
             sb.append(token, 0, i)
             while (true) {
                 if (++i >= len)
-                    throw JSONPointerException("Illegal token in JSON Pointer $token")
+                    pointerError("Illegal token in JSON Pointer", token)
                 when (token[i]) {
                     '0' -> sb.append('~')
                     '1' -> sb.append('/')
-                    else -> throw JSONPointerException("Illegal token in JSON Pointer $token")
+                    else -> pointerError("Illegal token in JSON Pointer", token)
                 }
                 while (true) {
                     if (++i >= len)
@@ -303,7 +330,7 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
 
         fun fromURIFragment(fragment: String): JSONPointer {
             if (fragment.isEmpty() || fragment[0] != '#')
-                throw JSONPointerException("Illegal URI fragment $fragment")
+                pointerError("Illegal URI fragment", fragment)
             val pipeline = URIDecoder(UTF8_CodePoint(StringAcceptor()))
             try {
                 for (i in 1 until fragment.length)
@@ -311,9 +338,17 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
                 pipeline.close()
             }
             catch (e: Exception) {
-                throw JSONPointerException("Illegal URI fragment $fragment")
+                pointerError("Illegal URI fragment", fragment)
             }
             return JSONPointer(pipeline.result)
+        }
+
+        internal fun pointerError(mainText: String, tokens: Array<String>, tokenIndex: Int): Nothing {
+            pointerError(mainText, toString(tokens, tokenIndex))
+        }
+
+        internal fun pointerError(mainText: String, pointer: String): Nothing {
+            throw JSONPointerException("$mainText - \"$pointer\"")
         }
 
     }

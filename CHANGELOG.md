@@ -2,6 +2,15 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [2.0] - 2022-10-08
+### Added
+- `JSONRef`: improved version of `JSONReference`
+- `IndexOp`: extension functions
+- `Extension`: extension functions
+### Changed
+- `JSONPointer`: added `findObject`, `findArray`, `findOrNull`
+- `pom.xml`: bumped dependency version
+
 ## [1.9.2] - 2022-09-19
 ### Changed
 - `pom.xml`: bumped dependency version
