@@ -36,9 +36,8 @@ import net.pwall.pipeline.IntAcceptor
 import net.pwall.pipeline.StringAcceptor
 import net.pwall.pipeline.codec.CodePoint_UTF8
 import net.pwall.pipeline.codec.UTF8_CodePoint
+import net.pwall.pipeline.uri.SchemaURIEncoder
 import net.pwall.pipeline.uri.URIDecoder
-import net.pwall.pipeline.uri.URIEncoder
-import net.pwall.util.IntOutput.output2Hex
 
 /**
  * JSON Pointer.
@@ -115,19 +114,6 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
     override fun hashCode(): Int = tokens.contentHashCode()
 
     override fun toString(): String = toString(tokens, tokens.size)
-
-    class SchemaURIEncoder<T>(next: IntAcceptor<T>) : AbstractIntPipeline<T>(next) {
-
-        override fun acceptInt(value: Int) {
-            if (URIEncoder.isUnreservedURI(value) || value == '$'.code)
-                emit(value)
-            else {
-                emit('%'.code)
-                output2Hex(value, ::emit)
-            }
-        }
-
-    }
 
     class EscapePipeline<T>(next: IntAcceptor<T>) : AbstractIntPipeline<T>(next) {
 

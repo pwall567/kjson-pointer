@@ -2,6 +2,11 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [2.1] - 2022-10-11
+### Changed
+- `JSONPointer`: changed to use URI encoding from `pipelines`
+- `pom.xml`: bumped dependency version
+
 ## [2.0] - 2022-10-08
 ### Added
 - `JSONRef`: improved version of `JSONReference`
