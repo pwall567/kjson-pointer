@@ -267,10 +267,10 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
 
         fun String.escapeJSONPointer() = mapCharacters { if (it == '~') "~0" else if (it == '/') "~1" else null }
 
-        fun String.unescapeJSONPointer() = mapSubstring { s, i ->
-            if (s[i] == '~') {
-                checkLength(s, i, 2)
-                when (s[i + 1]) {
+        fun String.unescapeJSONPointer() = mapSubstring { index ->
+            if (this[index] == '~') {
+                checkLength(this, index, 2)
+                when (this[index + 1]) {
                     '0' -> mapJSONPointer0
                     '1' -> mapJSONPointer1
                     else -> throw IllegalArgumentException("Invalid escape sequence")
