@@ -41,6 +41,8 @@ import io.kjson.JSONInt
 import io.kjson.JSONObject
 import io.kjson.JSONString
 import io.kjson.JSONValue
+import io.kjson.pointer.JSONPointer.Companion.escapeJSONPointer
+import io.kjson.pointer.JSONPointer.Companion.unescapeJSONPointer
 import io.kjson.pointer.test.SampleJSON.testArray
 import io.kjson.pointer.test.SampleJSON.testNestedObject
 import io.kjson.pointer.test.SampleJSON.testObject
@@ -263,13 +265,6 @@ class JSONPointerTest {
         expect(JSONPointer("/aaa/ccc/1")) { JSONPointer.root.locateChild(obj1, int2) }
     }
 
-    @Test fun `should correctly escape pointer string`() {
-        expect("abc") { JSONPointer.escape("abc") }
-        expect("ab~0") { JSONPointer.escape("ab~") }
-        expect("ab~1") { JSONPointer.escape("ab/") }
-        expect("ab~1~0cd") { JSONPointer.escape("ab/~cd") }
-    }
-
     @Test fun `should correctly unescape pointer string`() {
         val array1 = JSONPointer.parseString("/abc/def")
         expect(2) { array1.size }
@@ -320,6 +315,33 @@ class JSONPointerTest {
         assertTrue(obj is JSONArray)
         expect(JSONString("def")) { obj[1] }
         assertNull(JSONPointer("/nothing").findOrNull(testObject))
+    }
+
+    @Test fun `should map JSON Pointer characters correctly`() {
+        val unchanged = "unchanged"
+        assertSame(unchanged, unchanged.escapeJSONPointer())
+        expect("a~1b") { "a/b".escapeJSONPointer() }
+        expect("a~1~0b") { "a/~b".escapeJSONPointer() }
+        expect("abc") { "abc".escapeJSONPointer() }
+        expect("ab~0") { "ab~".escapeJSONPointer() }
+        expect("ab~1") { "ab/".escapeJSONPointer() }
+        expect("ab~1~0cd") { "ab/~cd".escapeJSONPointer() }
+    }
+
+    @Test fun `should unmap JSON Pointer characters correctly`() {
+        val unchanged = "unchanged"
+        assertSame(unchanged, unchanged.unescapeJSONPointer())
+        expect("a/b") { "a~1b".unescapeJSONPointer() }
+        expect("a/~b") { "a~1~0b".unescapeJSONPointer() }
+    }
+
+    @Test fun `should fail on incorrect JSON Pointer string`() {
+        assertFailsWith<IllegalArgumentException> { "~".unescapeJSONPointer() }.let {
+            expect("Incomplete escape sequence") { it.message }
+        }
+        assertFailsWith<IllegalArgumentException> { "~9".unescapeJSONPointer() }.let {
+            expect("Invalid escape sequence") { it.message }
+        }
     }
 
 }

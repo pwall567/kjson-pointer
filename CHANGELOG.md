@@ -2,6 +2,11 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [2.2] - 2022-10-16
+### Changed
+- `JSONPointer`: changed to use URI encoding from `string-mapper`
+- `pom.xml`: dropped `pipelines` dependency and added `string-mapper`
+
 ## [2.1] - 2022-10-11
 ### Changed
 - `JSONPointer`: changed to use URI encoding from `pipelines`

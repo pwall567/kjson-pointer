@@ -31,13 +31,14 @@ import io.kjson.JSONArray
 import io.kjson.JSONObject
 import io.kjson.JSONValue
 
-import net.pwall.pipeline.AbstractIntPipeline
-import net.pwall.pipeline.IntAcceptor
-import net.pwall.pipeline.StringAcceptor
-import net.pwall.pipeline.codec.CodePoint_UTF8
-import net.pwall.pipeline.codec.UTF8_CodePoint
-import net.pwall.pipeline.uri.SchemaURIEncoder
-import net.pwall.pipeline.uri.URIDecoder
+import net.pwall.text.CharMapResult
+import net.pwall.text.StringMapper.checkLength
+import net.pwall.text.StringMapper.mapCharacters
+import net.pwall.text.StringMapper.mapSubstring
+import net.pwall.text.URIStringMapper.decodeURI
+import net.pwall.text.URIStringMapper.encodeURI
+import net.pwall.text.UTF8StringMapper.fromUTF8
+import net.pwall.text.UTF8StringMapper.toUTF8
 
 /**
  * JSON Pointer.
@@ -82,10 +83,9 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
 
     fun toURIFragment(): String = buildString {
         append('#')
-        val pipeline = EscapePipeline(CodePoint_UTF8(SchemaURIEncoder(StringAcceptor(this))))
         for (token in tokens) {
             append('/')
-            pipeline.accept(token)
+            append(token.escapeJSONPointer().toUTF8().encodeURI())
         }
     }
 
@@ -114,24 +114,6 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
     override fun hashCode(): Int = tokens.contentHashCode()
 
     override fun toString(): String = toString(tokens, tokens.size)
-
-    class EscapePipeline<T>(next: IntAcceptor<T>) : AbstractIntPipeline<T>(next) {
-
-        override fun acceptInt(value: Int) {
-            when (value) {
-                '~'.code -> {
-                    emit('~'.code)
-                    emit('0'.code)
-                }
-                '/'.code -> {
-                    emit('~'.code)
-                    emit('1'.code)
-                }
-                else -> emit(value)
-            }
-        }
-
-    }
 
     companion object {
 
@@ -244,34 +226,8 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
             return buildString {
                 for (i in 0 until n) {
                     append('/')
-                    append(escape(tokens[i]))
+                    append(tokens[i].escapeJSONPointer())
                 }
-            }
-        }
-
-        fun escape(token: String): String {
-            val len = token.length
-            var i = 0
-            var ch: Char
-            while (true) {
-                if (i >= len)
-                    return token
-                ch = token[i]
-                if (ch == '~' || ch == '/')
-                    break
-                i++
-            }
-            val sb = StringBuilder(len + 8)
-            sb.append(token, 0, i)
-            while (true) {
-                when (ch) {
-                    '~' -> sb.append("~0")
-                    '/' -> sb.append("~1")
-                    else -> sb.append(ch)
-                }
-                if (++i >= len)
-                    return sb.toString()
-                ch = token[i]
             }
         }
 
@@ -280,53 +236,25 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
                 return emptyArray()
             if (string[0] != '/')
                 pointerError("Illegal JSON Pointer", string)
-            return string.substring(1).split('/').map { unescape(it) }.toTypedArray()
-        }
-
-        private fun unescape(token: String): String {
-            val len = token.length
-            var i = 0
-            while (true) {
-                if (i >= len)
-                    return token
-                if (token[i] == '~')
-                    break
-                i++
-            }
-            val sb = StringBuilder(len)
-            sb.append(token, 0, i)
-            while (true) {
-                if (++i >= len)
-                    pointerError("Illegal token in JSON Pointer", token)
-                when (token[i]) {
-                    '0' -> sb.append('~')
-                    '1' -> sb.append('/')
-                    else -> pointerError("Illegal token in JSON Pointer", token)
+            return string.substring(1).split('/').map {
+                try {
+                    it.unescapeJSONPointer()
                 }
-                while (true) {
-                    if (++i >= len)
-                        return sb.toString()
-                    when (val ch = token[i]) {
-                        '~' -> break
-                        else -> sb.append(ch)
-                    }
+                catch (e: Exception) {
+                    pointerError("Illegal token in JSON Pointer", it)
                 }
-            }
+            }.toTypedArray()
         }
 
         fun fromURIFragment(fragment: String): JSONPointer {
             if (fragment.isEmpty() || fragment[0] != '#')
                 pointerError("Illegal URI fragment", fragment)
-            val pipeline = URIDecoder(UTF8_CodePoint(StringAcceptor()))
-            try {
-                for (i in 1 until fragment.length)
-                    pipeline.accept(fragment[i].code)
-                pipeline.close()
-            }
-            catch (e: Exception) {
+            val pointer: String = try {
+                fragment.substring(1).decodeURI().fromUTF8()
+            } catch (e: Exception) {
                 pointerError("Illegal URI fragment", fragment)
             }
-            return JSONPointer(pipeline.result)
+            return JSONPointer(pointer)
         }
 
         internal fun pointerError(mainText: String, tokens: Array<String>, tokenIndex: Int): Nothing {
@@ -336,6 +264,24 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
         internal fun pointerError(mainText: String, pointer: String): Nothing {
             throw JSONPointerException("$mainText - \"$pointer\"")
         }
+
+        fun String.escapeJSONPointer() = mapCharacters { if (it == '~') "~0" else if (it == '/') "~1" else null }
+
+        fun String.unescapeJSONPointer() = mapSubstring { s, i ->
+            if (s[i] == '~') {
+                checkLength(s, i, 2)
+                when (s[i + 1]) {
+                    '0' -> mapJSONPointer0
+                    '1' -> mapJSONPointer1
+                    else -> throw IllegalArgumentException("Invalid escape sequence")
+                }
+            }
+            else
+                null
+        }
+
+        private val mapJSONPointer0 = CharMapResult(2, '~')
+        private val mapJSONPointer1 = CharMapResult(2, '/')
 
     }
 
