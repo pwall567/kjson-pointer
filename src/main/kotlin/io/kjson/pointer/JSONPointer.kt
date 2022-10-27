@@ -34,11 +34,11 @@ import io.kjson.JSONValue
 import net.pwall.text.CharMapResult
 import net.pwall.text.StringMapper.checkLength
 import net.pwall.text.StringMapper.mapCharacters
-import net.pwall.text.StringMapper.mapSubstring
+import net.pwall.text.StringMapper.mapSubstrings
 import net.pwall.text.URIStringMapper.decodeURI
 import net.pwall.text.URIStringMapper.encodeURI
-import net.pwall.text.UTF8StringMapper.fromUTF8
-import net.pwall.text.UTF8StringMapper.toUTF8
+import net.pwall.text.UTF8StringMapper.decodeUTF8
+import net.pwall.text.UTF8StringMapper.encodeUTF8
 
 /**
  * JSON Pointer.
@@ -85,7 +85,7 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
         append('#')
         for (token in tokens) {
             append('/')
-            append(token.escapeJSONPointer().toUTF8().encodeURI())
+            append(token.encodeJSONPointer().encodeUTF8().encodeURI())
         }
     }
 
@@ -226,7 +226,7 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
             return buildString {
                 for (i in 0 until n) {
                     append('/')
-                    append(tokens[i].escapeJSONPointer())
+                    append(tokens[i].encodeJSONPointer())
                 }
             }
         }
@@ -238,7 +238,7 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
                 pointerError("Illegal JSON Pointer", string)
             return string.substring(1).split('/').map {
                 try {
-                    it.unescapeJSONPointer()
+                    it.decodeJSONPointer()
                 }
                 catch (e: Exception) {
                     pointerError("Illegal token in JSON Pointer", it)
@@ -250,7 +250,7 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
             if (fragment.isEmpty() || fragment[0] != '#')
                 pointerError("Illegal URI fragment", fragment)
             val pointer: String = try {
-                fragment.substring(1).decodeURI().fromUTF8()
+                fragment.substring(1).decodeURI().decodeUTF8()
             } catch (e: Exception) {
                 pointerError("Illegal URI fragment", fragment)
             }
@@ -265,23 +265,30 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
             throw JSONPointerException("$mainText - \"$pointer\"")
         }
 
-        fun String.escapeJSONPointer() = mapCharacters { if (it == '~') "~0" else if (it == '/') "~1" else null }
-
-        fun String.unescapeJSONPointer() = mapSubstring { index ->
-            if (this[index] == '~') {
-                checkLength(this, index, 2)
-                when (this[index + 1]) {
-                    '0' -> mapJSONPointer0
-                    '1' -> mapJSONPointer1
-                    else -> throw IllegalArgumentException("Invalid escape sequence")
-                }
+        fun String.encodeJSONPointer() = mapCharacters {
+            when (it) {
+                '~' -> "~0"
+                '/' -> "~1"
+                else -> null
             }
-            else
-                null
         }
 
-        private val mapJSONPointer0 = CharMapResult(2, '~')
-        private val mapJSONPointer1 = CharMapResult(2, '/')
+        fun String.decodeJSONPointer() = mapSubstrings { index ->
+            when (this[index]) {
+                '~' -> {
+                    checkLength(this, index, 2)
+                    when (this[index + 1]) {
+                        '0' -> mapJSONPointerTilde
+                        '1' -> mapJSONPointerSlash
+                        else -> throw IllegalArgumentException("Invalid escape sequence")
+                    }
+                }
+                else -> null
+            }
+        }
+
+        private val mapJSONPointerTilde = CharMapResult(2, '~')
+        private val mapJSONPointerSlash = CharMapResult(2, '/')
 
     }
 

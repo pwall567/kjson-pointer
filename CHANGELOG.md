@@ -2,6 +2,11 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [2.4] - 2022-10-27
+### Changed
+- `JSONPointer`: minor changes for new version of `string-mapper`
+- `pom.xml`: bumped dependency version
+
 ## [2.3] - 2022-10-16
 ### Changed
 - `JSONPointer`: updated for new version of `string-mapper`
