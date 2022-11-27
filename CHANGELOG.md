@@ -2,6 +2,10 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [3.0] - 2022-11-27
+### Changed
+- `pom.xml`: updated major version for potential breaking change (in `kjson-core`)
+
 ## [2.8] - 2022-11-27
 ### Changed
 - `pom.xml`: bumped dependency version
