@@ -55,10 +55,10 @@ class JSONRef<out J : JSONValue> internal constructor(
     inline fun <reified T : JSONValue> hasChild(index: Int): Boolean =
         (node is JSONArray && index < node.size && node[index] is T)
 
-    inline fun <reified T : JSONStructure> parent(): JSONRef<T> = parent(T::class)
+    inline fun <reified T : JSONStructure<*>> parent(): JSONRef<T> = parent(T::class)
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : JSONStructure> parent(parentClass: KClass<T>): JSONRef<T> {
+    fun <T : JSONStructure<*>> parent(parentClass: KClass<T>): JSONRef<T> {
         val tokens = pointer.tokens
         val len = tokens.size - 1
         val newValue = when {
