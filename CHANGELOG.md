@@ -2,6 +2,12 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [3.1] - 2022-11-29
+### Changed
+- `JSONRef`: added `isRef()` and `asRef()`
+- `JSONPointer`: minor change to error message output
+- `IndexOp`: Added `getObject()`, `getString()` _etc._
+
 ## [3.0] - 2022-11-27
 ### Changed
 - `pom.xml`: updated major version for potential breaking change (in `kjson-core`)

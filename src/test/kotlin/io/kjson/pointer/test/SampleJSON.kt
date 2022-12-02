@@ -31,7 +31,7 @@ import io.kjson.JSONString
 object SampleJSON {
 
     val testString = JSONString("test1")
-    val testObject = JSON.parseObject("""{"field1":123,"field2":["abc","def"]}""")
+    val testObject = JSON.parseObject("""{"field1":123,"field2":["abc","def"],"field3":true}""")
     val testArray = JSON.parseArray("""["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P"]""")
     val testMixedArray = JSON.parseArray("""[123,true,"cat",[]]""")
     val testNestedObject = JSON.parseObject("""{"field1":123,"field2":{"aaa":99,"bbb":[1,1,2,3,5]}}""")

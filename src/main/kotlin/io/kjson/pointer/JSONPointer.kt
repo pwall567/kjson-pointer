@@ -262,7 +262,7 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
         }
 
         internal fun pointerError(mainText: String, pointer: String): Nothing {
-            throw JSONPointerException("$mainText - \"$pointer\"")
+            throw JSONPointerException(if (pointer.isEmpty()) mainText else "$mainText - \"$pointer\"")
         }
 
         fun String.encodeJSONPointer() = mapCharacters {

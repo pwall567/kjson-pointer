@@ -160,6 +160,16 @@ Or over the properties of an object:
 ```
 This also illustrates the use of `JSONValue` as the parameterised type, to allow for the case where properties are of
 different types.
+When using a `JSONRef<JSONValue>`, the `isRef()` function tests whether the reference is to a node of a specific type:
+```kotlin
+    if (genericRef.isRef<JSONBoolean>) {
+        // the node is Boolean
+    }
+```
+and the `asRef()` function converts to a specified type, throwing an exception if the type is incorrect:
+```kotlin
+    val stringRef = genericRef.asRef<JSONString>()
+```
 
 More documentation to follow&hellip;
 

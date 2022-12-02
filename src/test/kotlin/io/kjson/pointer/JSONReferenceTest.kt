@@ -85,7 +85,7 @@ class JSONReferenceTest {
         expect(JSONPointer.root) { testReference1.pointer }
         assertTrue { testReference1.valid }
         assertTrue { testReference1.value is JSONObject }
-        expect("""{"field1":123,"field2":["abc","def"]}""") { testReference1.toString() }
+        expect("""{"field1":123,"field2":["abc","def"],"field3":true}""") { testReference1.toString() }
         val testReference2 = testReference1.child("field1")
         assertSame(testObject, testReference2.base)
         expect(JSONPointer.root.child("field1")) { testReference2.pointer }
@@ -100,7 +100,7 @@ class JSONReferenceTest {
         expect(JSONPointer.root) { testReference1.pointer }
         assertTrue { testReference1.valid }
         assertTrue { testReference1.value is JSONObject }
-        expect("""{"field1":123,"field2":["abc","def"]}""") { testReference1.toString() }
+        expect("""{"field1":123,"field2":["abc","def"],"field3":true}""") { testReference1.toString() }
         val testReference2 = testReference1.child("field2")
         assertSame(testObject, testReference2.base)
         expect(JSONPointer.root.child("field2")) { testReference2.pointer }
@@ -120,7 +120,7 @@ class JSONReferenceTest {
         expect(JSONPointer.root) { testReference1.pointer }
         assertTrue { testReference1.valid }
         assertTrue { testReference1.value is JSONObject }
-        expect("""{"field1":123,"field2":["abc","def"]}""") { testReference1.toString() }
+        expect("""{"field1":123,"field2":["abc","def"],"field3":true}""") { testReference1.toString() }
         val testReference2 = testReference1.child("field1")
         assertSame(testObject, testReference2.base)
         expect(JSONPointer.root.child("field1")) { testReference2.pointer }
@@ -132,7 +132,7 @@ class JSONReferenceTest {
         expect(JSONPointer.root) { testReference3.pointer }
         assertTrue { testReference3.valid }
         assertTrue { testReference3.value is JSONObject }
-        expect("""{"field1":123,"field2":["abc","def"]}""") { testReference3.toString() }
+        expect("""{"field1":123,"field2":["abc","def"],"field3":true}""") { testReference3.toString() }
     }
 
     @Test fun `should respond correctly to hasChild`() {

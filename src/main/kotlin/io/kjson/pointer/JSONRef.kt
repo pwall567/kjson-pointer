@@ -28,6 +28,7 @@ package io.kjson.pointer
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
 
+import io.kjson.JSON.typeError
 import io.kjson.JSONArray
 import io.kjson.JSONObject
 import io.kjson.JSONStructure
@@ -67,7 +68,7 @@ class JSONRef<out J : JSONValue> internal constructor(
             else -> throw JSONPointerException("Can't get parent of root JSON Pointer")
         }
         if (!newValue::class.isSubclassOf(parentClass))
-            refTypeError("Parent", parentClass, pointer.toString())
+            newValue.typeError(parentClass, pointer, nodeName = "Parent")
         return JSONRef(
             base = base,
             tokens = Array(len) { i -> tokens[i] },
@@ -99,7 +100,7 @@ class JSONRef<out J : JSONValue> internal constructor(
     @Suppress("UNCHECKED_CAST")
     private fun <T : JSONValue> createChild(childClass: KClass<T>, node: JSONValue?, token: String): JSONRef<T> {
         if (node == null || !node::class.isSubclassOf(childClass))
-            refTypeError("Child", childClass, "$pointer/$token")
+            node.typeError(childClass, pointer.child(token), nodeName = "Child")
         val tokens = pointer.tokens
         val len = tokens.size
         return JSONRef(
@@ -124,6 +125,21 @@ class JSONRef<out J : JSONValue> internal constructor(
             }
         }
         return null
+    }
+
+    inline fun <reified T : JSONValue> asRef(): JSONRef<T> = asRef(T::class)
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T : JSONValue> asRef(refClass: KClass<T>): JSONRef<T> {
+        if (!node::class.isSubclassOf(refClass))
+            node.typeError(refClass, pointer)
+        return this as JSONRef<T>
+    }
+
+    inline fun <reified T : JSONValue> isRef(): Boolean = isRef(T::class)
+
+    fun <T : JSONValue> isRef(refClass: KClass<T>): Boolean {
+        return node::class.isSubclassOf(refClass)
     }
 
     override fun equals(other: Any?): Boolean =
@@ -171,12 +187,8 @@ class JSONRef<out J : JSONValue> internal constructor(
                 }
             }
             if (!node::class.isSubclassOf(refClass))
-                refTypeError("Node", refClass, pointer.toString())
+                node.typeError(refClass, pointer)
             return JSONRef(json, tokens, nodes, node) as JSONRef<T>
-        }
-
-        private fun refTypeError(relationship: String, expectedClass: KClass<*>, pointer: String): Nothing {
-            pointerError("$relationship is not correct type (${expectedClass.simpleName})", pointer)
         }
 
     }
