@@ -25,8 +25,7 @@
 
 package io.kjson.pointer
 
-import io.kjson.JSON.asArrayOrNull
-import io.kjson.JSON.asObjectOrNull
+import io.kjson.JSON.typeError
 import io.kjson.JSONArray
 import io.kjson.JSONObject
 import io.kjson.JSONValue
@@ -53,16 +52,18 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
 
     fun findOrNull(base: JSONValue?): JSONValue? = findOrNull(tokens, base)
 
-    fun findObject(base: JSONValue?): JSONObject = findOrNull(tokens, base).asObjectOrNull ?:
-            pointerError("JSON Pointer does not point to object", toString())
+    fun findObject(base: JSONValue?): JSONObject = findOrNull(tokens, base).let {
+        it as? JSONObject ?: it.typeError("JSONObject", this)
+    }
 
-    fun findArray(base: JSONValue?): JSONArray = findOrNull(tokens, base).asArrayOrNull ?:
-            pointerError("JSON Pointer does not point to array", toString())
+    fun findArray(base: JSONValue?): JSONArray = findOrNull(tokens, base).let {
+        it as? JSONArray ?: it.typeError("JSONArray", this)
+    }
 
     infix fun existsIn(json: JSONValue?): Boolean = existsIn(tokens, json)
 
     fun parent(): JSONPointer = when (val len = tokens.size) {
-        0 -> throw JSONPointerException("Can't get parent of root JSON Pointer")
+        0 -> rootParentError()
         1 -> root
         else -> JSONPointer(Array(len - 1) { i -> tokens[i] })
     }
@@ -82,7 +83,6 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
         get() = if (tokens.isEmpty()) null else tokens[tokens.size - 1]
 
     fun toURIFragment(): String = buildString {
-        append('#')
         for (token in tokens) {
             append('/')
             append(token.encodeJSONPointer().encodeUTF8().encodeURI())
@@ -247,10 +247,8 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
         }
 
         fun fromURIFragment(fragment: String): JSONPointer {
-            if (fragment.isEmpty() || fragment[0] != '#')
-                pointerError("Illegal URI fragment", fragment)
             val pointer: String = try {
-                fragment.substring(1).decodeURI().decodeUTF8()
+                fragment.decodeURI().decodeUTF8()
             } catch (e: Exception) {
                 pointerError("Illegal URI fragment", fragment)
             }
@@ -263,6 +261,10 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
 
         internal fun pointerError(mainText: String, pointer: String): Nothing {
             throw JSONPointerException(if (pointer.isEmpty()) mainText else "$mainText - \"$pointer\"")
+        }
+
+        internal fun rootParentError(): Nothing {
+            throw JSONPointerException("Can't get parent of root JSON Pointer")
         }
 
         fun String.encodeJSONPointer() = mapCharacters {

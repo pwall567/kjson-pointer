@@ -59,76 +59,76 @@ operator fun JSONValue.contains(pointer: JSONPointer) = pointer existsIn this
  * Get a `String` from a [JSONValue] using the specified [JSONPointer].
  */
 fun JSONValue.getString(pointer: JSONPointer): String =
-        pointer.find(this).let { it.asStringOrNull ?: it.typeError(String::class, pointer) }
+        pointer.find(this).let { it.asStringOrNull ?: it.typeError("String", pointer) }
 
 /**
  * Get a `Long` from a [JSONValue] using the specified [JSONPointer].
  */
 fun JSONValue.getLong(pointer: JSONPointer): Long =
-        pointer.find(this).let { it.asLongOrNull ?: it.typeError(Long::class, pointer) }
+        pointer.find(this).let { it.asLongOrNull ?: it.typeError("Long", pointer) }
 
 /**
  * Get an `Int` from a [JSONValue] using the specified [JSONPointer].
  */
 fun JSONValue.getInt(pointer: JSONPointer): Int =
-        pointer.find(this).let { it.asIntOrNull ?: it.typeError(Int::class, pointer) }
+        pointer.find(this).let { it.asIntOrNull ?: it.typeError("Int", pointer) }
 
 /**
  * Get a `Short` from a [JSONValue] using the specified [JSONPointer].
  */
 fun JSONValue.getShort(pointer: JSONPointer): Short =
-        pointer.find(this).let { it.asShortOrNull ?: it.typeError(Short::class, pointer) }
+        pointer.find(this).let { it.asShortOrNull ?: it.typeError("Short", pointer) }
 
 /**
  * Get a `Byte` from a [JSONValue] using the specified [JSONPointer].
  */
 fun JSONValue.getByte(pointer: JSONPointer): Byte =
-        pointer.find(this).let { it.asByteOrNull ?: it.typeError(Byte::class, pointer) }
+        pointer.find(this).let { it.asByteOrNull ?: it.typeError("Byte", pointer) }
 
 /**
  * Get a `ULong` from a [JSONValue] using the specified [JSONPointer].
  */
 fun JSONValue.getULong(pointer: JSONPointer): ULong =
-        pointer.find(this).let { it.asULongOrNull ?: it.typeError(ULong::class, pointer) }
+        pointer.find(this).let { it.asULongOrNull ?: it.typeError("ULong", pointer) }
 
 /**
  * Get a `UInt` from a [JSONValue] using the specified [JSONPointer].
  */
 fun JSONValue.getUInt(pointer: JSONPointer): UInt =
-        pointer.find(this).let { it.asUIntOrNull ?: it.typeError(UInt::class, pointer) }
+        pointer.find(this).let { it.asUIntOrNull ?: it.typeError("UInt", pointer) }
 
 /**
  * Get a `UShort` from a [JSONValue] using the specified [JSONPointer].
  */
 fun JSONValue.getUShort(pointer: JSONPointer): UShort =
-        pointer.find(this).let { it.asUShortOrNull ?: it.typeError(UShort::class, pointer) }
+        pointer.find(this).let { it.asUShortOrNull ?: it.typeError("UShort", pointer) }
 
 /**
  * Get a `UByte` from a [JSONValue] using the specified [JSONPointer].
  */
 fun JSONValue.getUByte(pointer: JSONPointer): UByte =
-        pointer.find(this).let { it.asUByteOrNull ?: it.typeError(UByte::class, pointer) }
+        pointer.find(this).let { it.asUByteOrNull ?: it.typeError("UByte", pointer) }
 
 /**
  * Get a `Decimal` from a [JSONValue] using the specified [JSONPointer].
  */
 fun JSONValue.getDecimal(pointer: JSONPointer): BigDecimal =
-        pointer.find(this).let { it.asDecimalOrNull ?: it.typeError(BigDecimal::class, pointer) }
+        pointer.find(this).let { it.asDecimalOrNull ?: it.typeError("BigDecimal", pointer) }
 
 /**
  * Get a `Boolean` from a [JSONValue] using the specified [JSONPointer].
  */
 fun JSONValue.getBoolean(pointer: JSONPointer): Boolean =
-        pointer.find(this).let { it.asBooleanOrNull ?: it.typeError(Boolean::class, pointer) }
+        pointer.find(this).let { it.asBooleanOrNull ?: it.typeError("Boolean", pointer) }
 
 /**
  * Get an array from a [JSONValue] using the specified [JSONPointer].
  */
 fun JSONValue.getArray(pointer: JSONPointer): JSONArray =
-        pointer.find(this).let { it.asArrayOrNull ?: it.typeError(JSONArray::class, pointer) }
+        pointer.find(this).let { it.asArrayOrNull ?: it.typeError("JSONArray", pointer) }
 
 /**
  * Get an object from a [JSONValue] using the specified [JSONPointer].
  */
 fun JSONValue.getObject(pointer: JSONPointer): JSONObject =
-        pointer.find(this).let { it.asObjectOrNull ?: it.typeError(JSONObject::class, pointer) }
+        pointer.find(this).let { it.asObjectOrNull ?: it.typeError("JSONObject", pointer) }

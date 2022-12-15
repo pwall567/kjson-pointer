@@ -26,12 +26,16 @@
 package io.kjson.pointer
 
 import kotlin.test.Test
+import kotlin.test.assertTrue
 import kotlin.test.expect
 import kotlin.test.fail
 
 import io.kjson.JSON
+import io.kjson.JSONBoolean
 import io.kjson.JSONInt
 import io.kjson.JSONString
+import io.kjson.pointer.test.SampleJSON.testMixedArray
+import io.kjson.pointer.test.SampleJSON.testObjectWithNull
 
 class ExtensionTest {
 
@@ -74,6 +78,20 @@ class ExtensionTest {
         expect(1 to "is") { results[1] }
         expect(2 to "the") { results[2] }
         expect(3 to "hour") { results[3] }
+    }
+
+    @Test fun `should get untyped child of object`() {
+        val ref = JSONRef(testObjectWithNull)
+        val child = ref.untypedChild("field1")
+        assertTrue(child.isRef<JSONInt>())
+    }
+
+    @Test fun `should get untyped child of array`() {
+        val ref = JSONRef(testMixedArray)
+        val child0 = ref.untypedChild(0)
+        assertTrue(child0.isRef<JSONInt>())
+        val child1 = ref.untypedChild(1)
+        assertTrue(child1.isRef<JSONBoolean>())
     }
 
 }

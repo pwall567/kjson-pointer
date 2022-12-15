@@ -37,6 +37,7 @@ import java.io.File
 
 import io.kjson.JSON
 import io.kjson.JSONArray
+import io.kjson.JSONIncorrectTypeException
 import io.kjson.JSONInt
 import io.kjson.JSONObject
 import io.kjson.JSONString
@@ -99,37 +100,37 @@ class JSONPointerTest {
     }
 
     @Test fun `should create correct URI fragment`() {
-        expect("#") { JSONPointer("").toURIFragment() }
-        expect("#/foo") { JSONPointer("/foo").toURIFragment() }
-        expect("#/foo/0") { JSONPointer("/foo/0").toURIFragment() }
-        expect("#/") { JSONPointer("/").toURIFragment() }
-        expect("#/a~1b") { JSONPointer("/a~1b").toURIFragment() }
-        expect("#/c%25d") { JSONPointer("/c%d").toURIFragment() }
-        expect("#/e%5Ef") { JSONPointer("/e^f").toURIFragment() }
-        expect("#/g%7Ch") { JSONPointer("/g|h").toURIFragment() }
-        expect("#/i%5Cj") { JSONPointer("/i\\j").toURIFragment() }
-        expect("#/k%22l") { JSONPointer("/k\"l").toURIFragment() }
-        expect("#/%20") { JSONPointer("/ ").toURIFragment() }
-        expect("#/m~0n") { JSONPointer("/m~0n").toURIFragment() }
-        expect("#/o%2Ap") { JSONPointer("/o*p").toURIFragment() }
-        expect("#/q%2Br") { JSONPointer("/q+r").toURIFragment() }
+        expect("") { JSONPointer("").toURIFragment() }
+        expect("/foo") { JSONPointer("/foo").toURIFragment() }
+        expect("/foo/0") { JSONPointer("/foo/0").toURIFragment() }
+        expect("/") { JSONPointer("/").toURIFragment() }
+        expect("/a~1b") { JSONPointer("/a~1b").toURIFragment() }
+        expect("/c%25d") { JSONPointer("/c%d").toURIFragment() }
+        expect("/e%5Ef") { JSONPointer("/e^f").toURIFragment() }
+        expect("/g%7Ch") { JSONPointer("/g|h").toURIFragment() }
+        expect("/i%5Cj") { JSONPointer("/i\\j").toURIFragment() }
+        expect("/k%22l") { JSONPointer("/k\"l").toURIFragment() }
+        expect("/%20") { JSONPointer("/ ").toURIFragment() }
+        expect("/m~0n") { JSONPointer("/m~0n").toURIFragment() }
+        expect("/o%2Ap") { JSONPointer("/o*p").toURIFragment() }
+        expect("/q%2Br") { JSONPointer("/q+r").toURIFragment() }
     }
 
     @Test fun `should correctly decode URI fragment`() {
-        expect(JSONPointer("")) { JSONPointer.fromURIFragment("#") }
-        expect(JSONPointer("/foo")) { JSONPointer.fromURIFragment("#/foo") }
-        expect(JSONPointer("/foo/0")) { JSONPointer.fromURIFragment("#/foo/0") }
-        expect(JSONPointer("/")) { JSONPointer.fromURIFragment("#/") }
-        expect(JSONPointer("/a~1b")) { JSONPointer.fromURIFragment("#/a~1b") }
-        expect(JSONPointer("/c%d")) { JSONPointer.fromURIFragment("#/c%25d") }
-        expect(JSONPointer("/e^f")) { JSONPointer.fromURIFragment("#/e%5Ef") }
-        expect(JSONPointer("/g|h")) { JSONPointer.fromURIFragment("#/g%7Ch") }
-        expect(JSONPointer("/i\\j")) { JSONPointer.fromURIFragment("#/i%5Cj") }
-        expect(JSONPointer("/k\"l")) { JSONPointer.fromURIFragment("#/k%22l") }
-        expect(JSONPointer("/ ")) { JSONPointer.fromURIFragment("#/%20") }
-        expect(JSONPointer("/m~0n")) { JSONPointer.fromURIFragment("#/m~0n") }
-        expect(JSONPointer("/o*p")) { JSONPointer.fromURIFragment("#/o%2Ap") }
-        expect(JSONPointer("/q+r")) { JSONPointer.fromURIFragment("#/q%2Br") }
+        expect(JSONPointer("")) { JSONPointer.fromURIFragment("") }
+        expect(JSONPointer("/foo")) { JSONPointer.fromURIFragment("/foo") }
+        expect(JSONPointer("/foo/0")) { JSONPointer.fromURIFragment("/foo/0") }
+        expect(JSONPointer("/")) { JSONPointer.fromURIFragment("/") }
+        expect(JSONPointer("/a~1b")) { JSONPointer.fromURIFragment("/a~1b") }
+        expect(JSONPointer("/c%d")) { JSONPointer.fromURIFragment("/c%25d") }
+        expect(JSONPointer("/e^f")) { JSONPointer.fromURIFragment("/e%5Ef") }
+        expect(JSONPointer("/g|h")) { JSONPointer.fromURIFragment("/g%7Ch") }
+        expect(JSONPointer("/i\\j")) { JSONPointer.fromURIFragment("/i%5Cj") }
+        expect(JSONPointer("/k\"l")) { JSONPointer.fromURIFragment("/k%22l") }
+        expect(JSONPointer("/ ")) { JSONPointer.fromURIFragment("/%20") }
+        expect(JSONPointer("/m~0n")) { JSONPointer.fromURIFragment("/m~0n") }
+        expect(JSONPointer("/o*p")) { JSONPointer.fromURIFragment("/o%2Ap") }
+        expect(JSONPointer("/q+r")) { JSONPointer.fromURIFragment("/q%2Br") }
     }
 
     @Test fun `should test whether pointer exists or not`() {
@@ -287,8 +288,8 @@ class JSONPointerTest {
     }
 
     @Test fun `should throw exception when findObject target is not an object`() {
-        assertFailsWith<JSONPointerException> { JSONPointer("/field1").findObject(testNestedObject) }.let {
-            expect("JSON Pointer does not point to object - \"/field1\"") { it.message }
+        assertFailsWith<JSONIncorrectTypeException> { JSONPointer("/field1").findObject(testNestedObject) }.let {
+            expect("Node not correct type (JSONObject), was 123, at /field1") { it.message }
         }
     }
 
@@ -298,8 +299,8 @@ class JSONPointerTest {
     }
 
     @Test fun `should throw exception when findArray target is not an array`() {
-        assertFailsWith<JSONPointerException> { JSONPointer("/field1").findArray(testObject) }.let {
-            expect("JSON Pointer does not point to array - \"/field1\"") { it.message }
+        assertFailsWith<JSONIncorrectTypeException> { JSONPointer("/field1").findArray(testObject) }.let {
+            expect("Node not correct type (JSONArray), was 123, at /field1") { it.message }
         }
     }
 
@@ -341,6 +342,12 @@ class JSONPointerTest {
         }
         assertFailsWith<IllegalArgumentException> { "~9".decodeJSONPointer() }.let {
             expect("Invalid escape sequence") { it.message }
+        }
+    }
+
+    @Test fun `should throw exception when trying to navigate to parent of root pointer`() {
+        assertFailsWith<JSONPointerException> { JSONPointer.root.parent() }.let {
+            expect("Can't get parent of root JSON Pointer") { it.message }
         }
     }
 

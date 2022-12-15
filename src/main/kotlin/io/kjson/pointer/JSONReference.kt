@@ -53,7 +53,7 @@ class JSONReference internal constructor(val base: JSONValue?, tokens: Array<Str
         val tokens = pointer.tokens
         val len = tokens.size
         if (len == 0)
-            throw JSONPointerException("Can't get parent of root JSON Pointer")
+            JSONPointer.rootParentError()
         val newArray = Array(len - 1) { i -> tokens[i] }
         return JSONReference(base, newArray, true, JSONPointer.find(newArray, base))
     }

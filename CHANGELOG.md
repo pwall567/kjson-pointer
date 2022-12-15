@@ -2,11 +2,14 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [3.1] - 2022-11-29
+## [4.0] - 2022-12-02
 ### Changed
+- `JSONPointer`: changed `toURIFragment()` and `fromURIFragment()` to no longer output or expect the leading `#`
+  (breaking change)
 - `JSONRef`: added `isRef()` and `asRef()`
 - `JSONPointer`: minor change to error message output
 - `IndexOp`: Added `getObject()`, `getString()` _etc._
+- `JSONRef`, `Extension`: moved `child()` and `hasChild()` from `JSONRef` to `Extension`, added `untypedRef()`
 
 ## [3.0] - 2022-11-27
 ### Changed

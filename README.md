@@ -7,6 +7,9 @@
 
 Kotlin implementation of [JSON Pointer](https://tools.ietf.org/html/rfc6901).
 
+Note &ndash; **Breaking Change** for users of the `toURIFragment()` and `fromURIFragment()` functions &ndash; from
+version 4.0 of the library, these functions no longer output or expect the leading `#` symbol.
+
 ## Quick Start
 
 ### `JSONPointer`
@@ -175,25 +178,25 @@ More documentation to follow&hellip;
 
 ## Dependency Specification
 
-The latest version of the library is 3.0, and it may be obtained from the Maven Central repository.
+The latest version of the library is 4.0, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>3.0</version>
+      <version>4.0</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:3.0'
+    implementation 'io.kjson:kjson-pointer:4.0'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:3.0")
+    implementation("io.kjson:kjson-pointer:4.0")
 ```
 
 Peter Wall
 
-2022-11-27
+2022-12-02

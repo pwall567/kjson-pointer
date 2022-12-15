@@ -26,35 +26,31 @@
 package io.kjson.pointer
 
 import kotlin.reflect.KClass
+import kotlin.reflect.KType
 import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.typeOf
 
 import io.kjson.JSON.typeError
 import io.kjson.JSONArray
 import io.kjson.JSONObject
 import io.kjson.JSONStructure
 import io.kjson.JSONValue
-import io.kjson.pointer.JSONPointer.Companion.pointerError
 
 /**
  * A reference to a JSON value of a specified type.
  *
  * @author  Peter Wall
  */
-class JSONRef<out J : JSONValue> internal constructor(
-    val base: JSONValue,
+class JSONRef<out J : JSONValue?> internal constructor(
+    val base: JSONValue?,
     tokens: Array<String>,
-    private val nodes: Array<JSONValue>,
+    private val nodes: Array<JSONValue?>,
     val node: J,
 ) {
 
     constructor(base: J) : this(base, emptyArray(), emptyArray(), base)
 
     val pointer = JSONPointer(tokens)
-
-    inline fun <reified T : JSONValue> hasChild(name: String): Boolean = node is JSONObject && node[name] is T
-
-    inline fun <reified T : JSONValue> hasChild(index: Int): Boolean =
-        (node is JSONArray && index < node.size && node[index] is T)
 
     inline fun <reified T : JSONStructure<*>> parent(): JSONRef<T> = parent(T::class)
 
@@ -65,10 +61,10 @@ class JSONRef<out J : JSONValue> internal constructor(
         val newValue = when {
             len > 0 -> nodes[len - 1]
             len == 0 -> base
-            else -> throw JSONPointerException("Can't get parent of root JSON Pointer")
+            else -> JSONPointer.rootParentError()
         }
-        if (!newValue::class.isSubclassOf(parentClass))
-            newValue.typeError(parentClass, pointer, nodeName = "Parent")
+        if (newValue == null || !newValue::class.isSubclassOf(parentClass))
+            newValue.typeError(parentClass.simpleName ?: "unknown", pointer, nodeName = "Parent")
         return JSONRef(
             base = base,
             tokens = Array(len) { i -> tokens[i] },
@@ -77,38 +73,27 @@ class JSONRef<out J : JSONValue> internal constructor(
         ) as JSONRef<T>
     }
 
-    inline fun <reified T : JSONValue> child(name: String): JSONRef<T> = child(T::class, name)
-
-    fun <T : JSONValue> child(childClass: KClass<T>, name: String): JSONRef<T> {
-        if (node !is JSONObject)
-            pointerError("Not an object", pointer.toString())
-        if (!node.containsKey(name))
-            pointerError("Node does not exist", "$pointer/$name")
-        return createChild(childClass, node[name], name)
-    }
-
-    inline fun <reified T : JSONValue> child(index: Int): JSONRef<T> = child(T::class, index)
-
-    fun <T : JSONValue> child(childClass: KClass<T>, index: Int): JSONRef<T> {
-        if (node !is JSONArray)
-            pointerError("Not an array", pointer.toString())
-        if (index !in node.indices)
-            pointerError("Index not valid", "$pointer/$index")
-        return createChild(childClass, node[index], index.toString())
-    }
-
     @Suppress("UNCHECKED_CAST")
-    private fun <T : JSONValue> createChild(childClass: KClass<T>, node: JSONValue?, token: String): JSONRef<T> {
-        if (node == null || !node::class.isSubclassOf(childClass))
-            node.typeError(childClass, pointer.child(token), nodeName = "Child")
+    internal fun <T : JSONValue> createTypedChildRef(
+        childClass: KClass<T>,
+        nullable: Boolean,
+        childNode: JSONValue?,
+        token: String,
+    ): JSONRef<T?> {
+        if (childNode == null && !nullable || childNode != null && !childNode::class.isSubclassOf(childClass))
+            childNode.typeError(childClass.refClassName(nullable), pointer.child(token), nodeName = "Child")
+        return createChildRef(token, childNode as T?)
+    }
+
+    internal fun <T : JSONValue?> createChildRef(token: String, targetNode: T): JSONRef<T> {
         val tokens = pointer.tokens
         val len = tokens.size
         return JSONRef(
             base = base,
             tokens = Array(len + 1) { i -> if (i < len) tokens[i] else token },
-            nodes = Array(len + 1) { i -> if (i < len) nodes[i] else node },
-            node = node,
-        ) as JSONRef<T>
+            nodes = Array(len + 1) { i -> if (i < len) nodes[i] else targetNode },
+            node = targetNode,
+        )
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -116,40 +101,49 @@ class JSONRef<out J : JSONValue> internal constructor(
         when {
             node === target -> return this as JSONRef<T>
             node is JSONObject -> {
+                val refObject = asRef<JSONObject>()
                 for (key in node.keys)
-                    child<JSONValue>(key).locateChild(target)?.let { return it }
+                    refObject.child<JSONValue>(key).locateChild(target)?.let { return it }
             }
             node is JSONArray -> {
+                val refArray = asRef<JSONArray>()
                 for (i in node.indices)
-                    child<JSONValue>(i).locateChild(target)?.let { return it }
+                    refArray.child<JSONValue>(i).locateChild(target)?.let { return it }
             }
         }
         return null
     }
 
-    inline fun <reified T : JSONValue> asRef(): JSONRef<T> = asRef(T::class)
-
     @Suppress("UNCHECKED_CAST")
-    fun <T : JSONValue> asRef(refClass: KClass<T>): JSONRef<T> {
-        if (!node::class.isSubclassOf(refClass))
-            node.typeError(refClass, pointer)
-        return this as JSONRef<T>
+    inline fun <reified T : JSONValue?> asRef(): JSONRef<T> {
+        val type = typeOf<T>()
+        return if (node.isType(type))
+            this as JSONRef<T>
+        else
+            node.typeError(T::class.refClassName(type.isMarkedNullable), pointer)
     }
 
-    inline fun <reified T : JSONValue> isRef(): Boolean = isRef(T::class)
-
-    fun <T : JSONValue> isRef(refClass: KClass<T>): Boolean {
-        return node::class.isSubclassOf(refClass)
-    }
+    inline fun <reified T : JSONValue?> isRef(): Boolean = node.isType(typeOf<T>())
 
     override fun equals(other: Any?): Boolean =
         this === other || other is JSONRef<*> && base === other.base && node === other.node && pointer == other.pointer
 
     override fun hashCode(): Int = base.hashCode() xor node.hashCode() xor pointer.hashCode()
 
-    override fun toString() = "JSONRef<${node::class.simpleName}>(pointer=\"$pointer\",node=${node.toJSON()})"
+    override fun toString() = "JSONRef<${node.nodeClass()}>(pointer=\"$pointer\",node=${node?.toJSON()})"
+
+    private fun JSONValue?.nodeClass(): String = if (this == null) "JSONValue?" else this::class.simpleName ?: "unknown"
 
     companion object {
+
+        fun KClass<*>.refClassName(nullable: Boolean): String = buildString {
+            append(simpleName)
+            if (nullable)
+                append('?')
+        }
+
+        fun JSONValue?.isType(refType: KType): Boolean =
+            if (this == null) refType.isMarkedNullable else this::class.isSubclassOf(refType.classifier as KClass<*>)
 
         fun <T : JSONValue> of(json: T): JSONRef<T> = JSONRef(json)
 
@@ -166,28 +160,28 @@ class JSONRef<out J : JSONValue> internal constructor(
         fun <T : JSONValue> of(refClass: KClass<T>, json: JSONValue, pointer: JSONPointer): JSONRef<T> {
             val tokens = pointer.tokens
             val len = tokens.size
-            val nodes = Array(len) { json }
+            val nodes = Array<JSONValue?>(len) { json }
             var node: JSONValue = json
             for (i in tokens.indices) {
                 val token = tokens[i]
                 when (node) {
                     is JSONObject -> {
                         if (!node.containsKey(token))
-                            pointerError("Node does not exist", tokens, i + 1)
-                        node = node[token] ?: pointerError("Node is null", tokens, i + 1)
+                            JSONPointer.pointerError("Node does not exist", tokens, i + 1)
+                        node = node[token] ?: JSONPointer.pointerError("Node is null", tokens, i + 1)
                         nodes[i] = node
                     }
                     is JSONArray -> {
                         if (!JSONPointer.checkNumber(token) || token.toInt() >= node.size)
-                            pointerError("Node index incorrect", tokens, i + 1)
-                        node = node[token.toInt()] ?: pointerError("Node is null", tokens, i + 1)
+                            JSONPointer.pointerError("Node index incorrect", tokens, i + 1)
+                        node = node[token.toInt()] ?: JSONPointer.pointerError("Node is null", tokens, i + 1)
                         nodes[i] = node
                     }
-                    else -> pointerError("Not an object or array", tokens, i)
+                    else -> JSONPointer.pointerError("Not an object or array", tokens, i)
                 }
             }
             if (!node::class.isSubclassOf(refClass))
-                node.typeError(refClass, pointer)
+                node.typeError(refClass.simpleName ?: "unknown", pointer)
             return JSONRef(json, tokens, nodes, node) as JSONRef<T>
         }
 
