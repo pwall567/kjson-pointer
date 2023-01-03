@@ -2,6 +2,10 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [4.1] - 2023-01-03
+### Changed
+- `pom.xml`: bumped dependency version
+
 ## [4.0] - 2022-12-02
 ### Changed
 - `JSONPointer`: changed `toURIFragment()` and `fromURIFragment()` to no longer output or expect the leading `#`
