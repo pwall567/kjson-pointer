@@ -2,7 +2,7 @@
  * @(#) IndexOp.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2022 Peter Wall
+ * Copyright (c) 2022, 2023 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -48,12 +48,12 @@ import io.kjson.JSONValue
 /**
  * Get the entry within `this` [JSONValue] using the specified [JSONPointer].
  */
-operator fun JSONValue.get(pointer: JSONPointer): JSONValue? = if (pointer.existsIn(this)) pointer.find(this) else null
+operator fun JSONValue?.get(pointer: JSONPointer): JSONValue? = if (pointer.existsIn(this)) pointer.find(this) else null
 
 /**
  * Test whether the specified [JSONPointer] points to a valid entry in `this` [JSONValue].
  */
-operator fun JSONValue.contains(pointer: JSONPointer) = pointer existsIn this
+operator fun JSONValue?.contains(pointer: JSONPointer) = pointer existsIn this
 
 /**
  * Get a `String` from a [JSONValue] using the specified [JSONPointer].

@@ -2,7 +2,7 @@
  * @(#) IndexOpTest.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2022 Peter Wall
+ * Copyright (c) 2022, 2023 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,8 +39,8 @@ import io.kjson.JSON.asString
 import io.kjson.JSONArray
 import io.kjson.JSONIncorrectTypeException
 import io.kjson.JSONInt
-import io.kjson.JSONObject
 import io.kjson.JSONString
+import io.kjson.JSONValue
 import io.kjson.pointer.test.SampleJSON.testObject
 
 class IndexOpTest {
@@ -54,11 +54,21 @@ class IndexOpTest {
         assertNull(testObject[JSONPointer("/bad")])
     }
 
+    @Test fun `should allow indexing operation on null and return not found`() {
+        val nullValue: JSONValue? = null
+        assertNull(nullValue[JSONPointer("/bad")])
+    }
+
     @Test fun `should perform -in- operation`() {
         assertTrue(JSONPointer("/field1") in testObject)
         assertTrue(JSONPointer("/field2/0") in testObject)
         assertFalse(JSONPointer("/field99") in testObject)
         assertFalse(JSONPointer("/field2/2") in testObject)
+    }
+
+    @Test fun `should allow -in- operation on null and return not found`() {
+        val nullValue: JSONValue? = null
+        assertFalse(JSONPointer("/wrong") in nullValue)
     }
 
     @Test fun `should get string from object using pointer`() {

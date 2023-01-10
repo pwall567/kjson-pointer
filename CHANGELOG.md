@@ -2,6 +2,10 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [4.3] - 2023-01-10
+### Changed
+- `IndexOp.kt`: allow `get()` and `contains()` functions to operate on null values
+
 ## [4.2] - 2023-01-08
 ### Changed
 - `pom.xml`: bumped dependency version
