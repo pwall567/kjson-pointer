@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/pwall567/kjson-pointer.svg?branch=main)](https://app.travis-ci.com/github/pwall567/kjson-pointer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Kotlin](https://img.shields.io/static/v1?label=Kotlin&message=v1.6.10&color=7f52ff&logo=kotlin&logoColor=7f52ff)](https://github.com/JetBrains/kotlin/releases/tag/v1.6.10)
+[![Kotlin](https://img.shields.io/static/v1?label=Kotlin&message=v1.7.21&color=7f52ff&logo=kotlin&logoColor=7f52ff)](https://github.com/JetBrains/kotlin/releases/tag/v1.7.21)
 [![Maven Central](https://img.shields.io/maven-central/v/io.kjson/kjson-pointer?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.kjson%22%20AND%20a:%22kjson-pointer%22)
 
 Kotlin implementation of [JSON Pointer](https://tools.ietf.org/html/rfc6901).
@@ -178,25 +178,25 @@ More documentation to follow&hellip;
 
 ## Dependency Specification
 
-The latest version of the library is 4.3, and it may be obtained from the Maven Central repository.
+The latest version of the library is 4.4, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>4.3</version>
+      <version>4.4</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:4.3'
+    implementation 'io.kjson:kjson-pointer:4.4'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:4.3")
+    implementation("io.kjson:kjson-pointer:4.4")
 ```
 
 Peter Wall
 
-2023-01-10
+2023-04-23
