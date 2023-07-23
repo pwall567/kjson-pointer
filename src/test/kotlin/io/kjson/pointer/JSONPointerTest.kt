@@ -351,4 +351,16 @@ class JSONPointerTest {
         }
     }
 
+    @Test fun `should create JSON Pointer from list`() {
+        val list = listOf("abc", "0")
+        val pointer = JSONPointer.from(list)
+        expect(JSONPointer("/abc/0")) { pointer }
+    }
+
+    @Test fun `should return root JSON Pointer for empty list`() {
+        val list = emptyList<String>()
+        val pointer = JSONPointer.from(list)
+        assertSame(JSONPointer.root, pointer)
+    }
+
 }

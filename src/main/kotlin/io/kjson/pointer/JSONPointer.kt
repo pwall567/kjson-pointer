@@ -2,7 +2,7 @@
  * @(#) JSONPointer.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2021, 2022 Peter Wall
+ * Copyright (c) 2021, 2022, 2023 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -119,6 +119,8 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
 
         val root = JSONPointer(emptyArray())
         private const val emptyString = ""
+
+        fun from(list: List<String>): JSONPointer = if (list.isEmpty()) root else JSONPointer(list.toTypedArray())
 
         fun find(pointer: String, base: JSONValue?) = find(parseString(pointer), base)
 
