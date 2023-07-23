@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/pwall567/kjson-pointer.svg?branch=main)](https://app.travis-ci.com/github/pwall567/kjson-pointer)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Kotlin](https://img.shields.io/static/v1?label=Kotlin&message=v1.7.21&color=7f52ff&logo=kotlin&logoColor=7f52ff)](https://github.com/JetBrains/kotlin/releases/tag/v1.7.21)
+[![Kotlin](https://img.shields.io/static/v1?label=Kotlin&message=v1.8.22&color=7f52ff&logo=kotlin&logoColor=7f52ff)](https://github.com/JetBrains/kotlin/releases/tag/v1.8.22)
 [![Maven Central](https://img.shields.io/maven-central/v/io.kjson/kjson-pointer?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.kjson%22%20AND%20a:%22kjson-pointer%22)
 
 Kotlin implementation of [JSON Pointer](https://tools.ietf.org/html/rfc6901).
@@ -47,6 +47,12 @@ To navigate to a child array element:
         val newPointer2 = newPointer.child(0)
 ```
 (the result of the last two operations is a pointer equivalent to the pointer in the first example).
+
+To create a pointer from a list of pointer elements:
+```kotlin
+        val pointerFromList = JSONPointer.from(listOf("prop1", "0"))
+```
+(again, the result will be a pointer equivalent to the pointer in the first example).
 
 To create a pointer to a specified child value within a structure:
 ```kotlin
@@ -178,25 +184,25 @@ More documentation to follow&hellip;
 
 ## Dependency Specification
 
-The latest version of the library is 4.5, and it may be obtained from the Maven Central repository.
+The latest version of the library is 4.6, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>4.5</version>
+      <version>4.6</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:4.5'
+    implementation 'io.kjson:kjson-pointer:4.6'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:4.5")
+    implementation("io.kjson:kjson-pointer:4.6")
 ```
 
 Peter Wall
 
-2023-07-05
+2023-07-23

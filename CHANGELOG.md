@@ -2,6 +2,11 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [4.6] - 2023-07-23
+### Changed
+- `JSONPointer`: added `from()` function to create pointer from list of tokens
+- `pom.xml`: updated Kotlin version to 1.8.22
+
 ## [4.5] - 2023-07-07
 ### Changed
 - `pom.xml`: bumped dependency versions
