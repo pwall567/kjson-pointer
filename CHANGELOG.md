@@ -2,6 +2,10 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [4.7] - 2023-07-24
+### Changed
+- `pom.xml`: updated dependency version
+
 ## [4.6] - 2023-07-23
 ### Changed
 - `JSONPointer`: added `from()` function to create pointer from list of tokens
