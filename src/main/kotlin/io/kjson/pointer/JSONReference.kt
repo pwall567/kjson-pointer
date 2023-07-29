@@ -2,7 +2,7 @@
  * @(#) JSONReference.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2021 Peter Wall
+ * Copyright (c) 2021, 2023 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -54,14 +54,12 @@ class JSONReference internal constructor(val base: JSONValue?, tokens: Array<Str
         val len = tokens.size
         if (len == 0)
             JSONPointer.rootParentError()
-        val newArray = Array(len - 1) { i -> tokens[i] }
+        val newArray = tokens.copyOfRange(0, len - 1)
         return JSONReference(base, newArray, true, JSONPointer.find(newArray, base))
     }
 
     fun child(name: String): JSONReference {
-        val tokens = pointer.tokens
-        val len = tokens.size
-        val newArray = Array(len + 1) { i -> if (i < len) tokens[i] else name }
+        val newArray = pointer.tokens + name
         return if (valid && value is JSONObject && value.containsKey(name))
             JSONReference(base, newArray, true, value[name])
         else
@@ -71,10 +69,8 @@ class JSONReference internal constructor(val base: JSONValue?, tokens: Array<Str
     fun child(index: Int): JSONReference {
         if (index < 0)
             throw JSONPointerException("JSON Pointer index must not be negative")
-        val tokens = pointer.tokens
-        val len = tokens.size
         val name = index.toString()
-        val newArray = Array(len + 1) { i -> if (i < len) tokens[i] else name }
+        val newArray = pointer.tokens + name
         if (valid) {
             if (value is JSONArray) {
                 if (index < value.size)

@@ -2,6 +2,10 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [Unreleased]
+### Changed
+- `JSONPointer`, `JSONRef`, `JSONReference`: switch to use of Kotlin intrinsic array functions
+
 ## [4.7] - 2023-07-24
 ### Changed
 - `pom.xml`: updated dependency version

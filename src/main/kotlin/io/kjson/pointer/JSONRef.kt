@@ -2,7 +2,7 @@
  * @(#) JSONRef.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2022 Peter Wall
+ * Copyright (c) 2022, 2023 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -67,8 +67,8 @@ class JSONRef<out J : JSONValue?> internal constructor(
             newValue.typeError(parentClass.simpleName ?: "unknown", pointer, nodeName = "Parent")
         return JSONRef(
             base = base,
-            tokens = Array(len) { i -> tokens[i] },
-            nodes = Array(len) { i -> nodes[i] },
+            tokens = tokens.copyOfRange(0, len),
+            nodes = nodes.copyOfRange(0, len),
             node = newValue
         ) as JSONRef<T>
     }
@@ -85,16 +85,12 @@ class JSONRef<out J : JSONValue?> internal constructor(
         return createChildRef(token, childNode as T?)
     }
 
-    internal fun <T : JSONValue?> createChildRef(token: String, targetNode: T): JSONRef<T> {
-        val tokens = pointer.tokens
-        val len = tokens.size
-        return JSONRef(
-            base = base,
-            tokens = Array(len + 1) { i -> if (i < len) tokens[i] else token },
-            nodes = Array(len + 1) { i -> if (i < len) nodes[i] else targetNode },
-            node = targetNode,
-        )
-    }
+    internal fun <T : JSONValue?> createChildRef(token: String, targetNode: T): JSONRef<T> = JSONRef(
+        base = base,
+        tokens = pointer.tokens + token,
+        nodes = nodes + targetNode,
+        node = targetNode,
+    )
 
     @Suppress("UNCHECKED_CAST")
     fun <T : JSONValue> locateChild(target: T): JSONRef<T>? {

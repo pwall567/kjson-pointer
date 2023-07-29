@@ -65,13 +65,10 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
     fun parent(): JSONPointer = when (val len = tokens.size) {
         0 -> rootParentError()
         1 -> root
-        else -> JSONPointer(Array(len - 1) { i -> tokens[i] })
+        else -> JSONPointer(tokens.copyOfRange(0, len - 1))
     }
 
-    fun child(string: String): JSONPointer {
-        val len = tokens.size
-        return JSONPointer(Array(len + 1) { i -> if (i < len) tokens[i] else string })
-    }
+    fun child(string: String): JSONPointer = JSONPointer(tokens + string)
 
     fun child(index: Int): JSONPointer {
         if (index < 0)
