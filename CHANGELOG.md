@@ -2,9 +2,11 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [Unreleased]
+## [5.0] - 2023-07-29
 ### Changed
 - `JSONPointer`, `JSONRef`, `JSONReference`: switch to use of Kotlin intrinsic array functions
+- `JSONPointer`: remove public access to tokens array
+- `JSONPointer`: added KDoc
 
 ## [4.7] - 2023-07-24
 ### Changed

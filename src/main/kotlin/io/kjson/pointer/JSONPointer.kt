@@ -38,47 +38,103 @@ import net.pwall.text.URIStringMapper.decodeURI
 import net.pwall.text.URIStringMapper.encodeURI
 import net.pwall.text.UTF8StringMapper.decodeUTF8
 import net.pwall.text.UTF8StringMapper.encodeUTF8
+import net.pwall.util.ImmutableList
 
 /**
  * JSON Pointer.
  *
  * @author  Peter Wall
  */
-class JSONPointer internal constructor(val tokens: Array<String>) {
+class JSONPointer internal constructor(internal val tokens: Array<String>) {
 
+    /**
+     * Construct a `JSONPointer` from the supplied `String`, which must consist of zero or more tokens representing
+     * either an object property name or an array index, with each token preceded by a slash (`/`).
+     */
     constructor(pointer: String) : this(parseString(pointer))
 
+    /** The depth of the pointer (the number of tokens). */
+    val depth: Int
+        get() = tokens.size
+
+    /**
+     * Get the tokens that make up this pointer as an [Array].
+     */
+    fun tokensAsArray(): Array<String> = if (tokens.isEmpty()) emptyArray() else tokens.copyOf()
+
+    /**
+     * Get the tokens that make up this pointer as a [List].
+     */
+    fun tokensAsList(): List<String> = ImmutableList.listOf(tokens)
+
+    /**
+     * Find the [JSONValue] that this `JSONPointer` points to within the specified base value, or throw an exception
+     * if the pointer does not reference a valid location in the base value.
+     */
     fun find(base: JSONValue?): JSONValue? = find(tokens, base)
 
+    /**
+     * Find the [JSONValue] that this `JSONPointer` points to within the specified base value, or `null` if the pointer
+     * does not reference a valid location in the base value.
+     */
     fun findOrNull(base: JSONValue?): JSONValue? = findOrNull(tokens, base)
 
+    /**
+     * Find the [JSONObject] that this `JSONPointer` points to within the specified base value, or throw an exception
+     * if the pointer does not reference a valid location in the base value or if the value referenced is not a
+     * [JSONObject].
+     */
     fun findObject(base: JSONValue?): JSONObject = findOrNull(tokens, base).let {
         it as? JSONObject ?: it.typeError("JSONObject", this)
     }
 
+    /**
+     * Find the [JSONArray] that this `JSONPointer` points to within the specified base value, or throw an exception
+     * if the pointer does not reference a valid location in the base value or if the value referenced is not a
+     * [JSONArray].
+     */
     fun findArray(base: JSONValue?): JSONArray = findOrNull(tokens, base).let {
         it as? JSONArray ?: it.typeError("JSONArray", this)
     }
 
+    /**
+     * Test whether this `JSONPointer` references a valid location in specified base value.
+     */
     infix fun existsIn(json: JSONValue?): Boolean = existsIn(tokens, json)
 
+    /**
+     * Return a new `JSONPointer` referencing the parent [JSONObject] or [JSONArray] of the value referenced by this
+     * pointer.
+     */
     fun parent(): JSONPointer = when (val len = tokens.size) {
         0 -> rootParentError()
         1 -> root
         else -> JSONPointer(tokens.copyOfRange(0, len - 1))
     }
 
+    /**
+     * Return a new `JSONPointer` referencing the nominated child property of the object referenced by this pointer.
+     */
     fun child(string: String): JSONPointer = JSONPointer(tokens + string)
 
+    /**
+     * Return a new `JSONPointer` referencing the nominated child item of the array referenced by this pointer.
+     */
     fun child(index: Int): JSONPointer {
         if (index < 0)
             throw JSONPointerException("JSON Pointer index must not be negative")
         return child(index.toString())
     }
 
+    /**
+     * Get the last token of the `JSONPointer` (the current property name or array index).
+     */
     val current: String?
-        get() = if (tokens.isEmpty()) null else tokens[tokens.size - 1]
+        get() = tokens.lastOrNull()
 
+    /**
+     * Convert the `JSONPointer` to a form suitable for use in a URI fragment.
+     */
     fun toURIFragment(): String = buildString {
         for (token in tokens) {
             append('/')
@@ -86,22 +142,31 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
         }
     }
 
-    fun locateChild(value: JSONValue?, target: JSONValue?): JSONPointer? {
+    /**
+     * Locate the specified target [JSONValue] in the base [JSONValue], and return a `JSONPointer` pointing to it, based
+     * on the current pointer.  Returns `null` if not found.
+     *
+     * This will perform a depth-first search of the JSON structure.
+     */
+    fun locateChild(base: JSONValue?, target: JSONValue?): JSONPointer? {
         when {
-            value === target -> return this
-            value is JSONObject -> {
-                for (key in value.keys) {
-                    child(key).locateChild(value[key], target)?.let { return it }
+            base === target -> return this
+            base is JSONObject -> {
+                for (key in base.keys) {
+                    child(key).locateChild(base[key], target)?.let { return it }
                 }
             }
-            value is JSONArray -> {
-                for (i in value.indices)
-                    child(i).locateChild(value[i], target)?.let { return it }
+            base is JSONArray -> {
+                for (i in base.indices)
+                    child(i).locateChild(base[i], target)?.let { return it }
             }
         }
         return null
     }
 
+    /**
+     * Create a [JSONReference] using this `JSONPointer` and the specified [JSONValue] base.
+     */
     infix fun ref(base: JSONValue?) = if (existsIn(tokens, base)) JSONReference(base, tokens, true, find(tokens, base))
             else JSONReference(base, tokens, false, null)
 
@@ -114,13 +179,31 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
 
     companion object {
 
+        /** The root `JSONPointer`. */
         val root = JSONPointer(emptyArray())
+
         private const val emptyString = ""
 
+        /**
+         * Create a `JSONPointer` from an array of tokens.
+         */
+        fun from(array: Array<String>): JSONPointer = if (array.isEmpty()) root else JSONPointer(array.copyOf())
+
+        /**
+         * Create a `JSONPointer` from a list of tokens.
+         */
         fun from(list: List<String>): JSONPointer = if (list.isEmpty()) root else JSONPointer(list.toTypedArray())
 
+        /**
+         * Find the [JSONValue] that this pointer string points to within the specified base value, or throw an
+         * exception if the pointer string does not reference a valid location in the base value.
+         */
         fun find(pointer: String, base: JSONValue?) = find(parseString(pointer), base)
 
+        /**
+         * Find the [JSONValue] that this set of tokens points to within the specified base value, or throw an
+         * exception if the tokens do not reference a valid location in the base value.
+         */
         fun find(tokens: Array<String>, base: JSONValue?): JSONValue? {
             var result = base
             for (i in tokens.indices) {
@@ -145,8 +228,16 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
             return result
         }
 
+        /**
+         * Find the [JSONValue] that this pointer string points to within the specified base value, or `null` if the
+         * pointer string does not reference a valid location in the base value.
+         */
         fun findOrNull(pointer: String, base: JSONValue?) = findOrNull(parseString(pointer), base)
 
+        /**
+         * Find the [JSONValue] that this set of tokens points to within the specified base value, or `null` if the
+         * tokens do not reference a valid location in the base value.
+         */
         fun findOrNull(tokens: Array<String>, base: JSONValue?): JSONValue? {
             var result = base
             for (i in tokens.indices) {
@@ -171,8 +262,14 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
             return result
         }
 
+        /**
+         * Test whether this pointer string references a valid location in specified base value.
+         */
         fun existsIn(string: String, base: JSONValue?): Boolean = existsIn(parseString(string), base)
 
+        /**
+         * Test whether this set of tokens references a valid location in specified base value.
+         */
         fun existsIn(tokens: Array<String>, base: JSONValue?): Boolean {
             var current: JSONValue? = base ?: return false
             for (token in tokens) {
@@ -219,6 +316,9 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
             }
         }
 
+        /**
+         * Create the string form of a JSON pointer from the first _n_ tokens in the specified array.
+         */
         fun toString(tokens: Array<String>, n: Int): String {
             if (n == 0)
                 return emptyString
@@ -230,6 +330,9 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
             }
         }
 
+        /**
+         * Parse a JSON Pointer string into an array of string tokens.
+         */
         fun parseString(string: String): Array<String> {
             if (string.isEmpty())
                 return emptyArray()
@@ -245,6 +348,9 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
             }.toTypedArray()
         }
 
+        /**
+         * Create a `JSONPointer` from a URI fragment.
+         */
         fun fromURIFragment(fragment: String): JSONPointer {
             val pointer: String = try {
                 fragment.decodeURI().decodeUTF8()
@@ -266,6 +372,9 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
             throw JSONPointerException("Can't get parent of root JSON Pointer")
         }
 
+        /**
+         * Encode a string using the character substitutions specified for JSON pointer token.
+         */
         fun String.encodeJSONPointer() = mapCharacters {
             when (it) {
                 '~' -> "~0"
@@ -274,6 +383,9 @@ class JSONPointer internal constructor(val tokens: Array<String>) {
             }
         }
 
+        /**
+         * Decode a string encoded using the character substitutions specified for JSON pointer token.
+         */
         fun String.decodeJSONPointer() = mapSubstrings { index ->
             when (this[index]) {
                 '~' -> {

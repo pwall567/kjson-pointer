@@ -351,6 +351,18 @@ class JSONPointerTest {
         }
     }
 
+    @Test fun `should create JSON Pointer from array`() {
+        val array = arrayOf("abc", "0")
+        val pointer = JSONPointer.from(array)
+        expect(JSONPointer("/abc/0")) { pointer }
+    }
+
+    @Test fun `should return root JSON Pointer for empty array`() {
+        val array = emptyArray<String>()
+        val pointer = JSONPointer.from(array)
+        assertSame(JSONPointer.root, pointer)
+    }
+
     @Test fun `should create JSON Pointer from list`() {
         val list = listOf("abc", "0")
         val pointer = JSONPointer.from(list)
@@ -361,6 +373,36 @@ class JSONPointerTest {
         val list = emptyList<String>()
         val pointer = JSONPointer.from(list)
         assertSame(JSONPointer.root, pointer)
+    }
+
+    @Test fun `should return tokens as array`() {
+        val pointer = JSONPointer("/abc/def/ghi")
+        val array = pointer.tokensAsArray()
+        expect(3) { array.size }
+        expect("abc") { array[0] }
+        expect("def") { array[1] }
+        expect("ghi") { array[2] }
+        array[0] = "xxx"
+        val array2 = pointer.tokensAsArray() // confirm that modifying the array doesn't affect pointer
+        expect(3) { array2.size }
+        expect("abc") { array2[0] }
+        expect("def") { array2[1] }
+        expect("ghi") { array2[2] }
+    }
+
+    @Test fun `should return tokens as list`() {
+        val pointer = JSONPointer("/abc/def/ghi")
+        val list = pointer.tokensAsList()
+        expect(3) { list.size }
+        expect("abc") { list[0] }
+        expect("def") { list[1] }
+        expect("ghi") { list[2] }
+    }
+
+    @Test fun `should return depth of pointer`() {
+        val pointer = JSONPointer("/abc/def/ghi")
+        expect(3) { pointer.depth }
+        expect(0) { JSONPointer.root.depth }
     }
 
 }

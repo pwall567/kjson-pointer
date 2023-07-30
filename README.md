@@ -7,6 +7,13 @@
 
 Kotlin implementation of [JSON Pointer](https://tools.ietf.org/html/rfc6901).
 
+Note &ndash; **Breaking Change** &ndash; from version 5.0 of the library, the `tokens` array is no longer accessible as
+a `public` value.
+It was an oversight to allow it be accessed previously since array members may be modified, and a `JSONPointer` is
+intended to be immutable.
+The array of tokens may be obtained by the functions `tokensAsArray()` which returns a copy of the array, or
+`tokensAsList()` which returns an immutable `List`.
+
 Note &ndash; **Breaking Change** for users of the `toURIFragment()` and `fromURIFragment()` functions &ndash; from
 version 4.0 of the library, these functions no longer output or expect the leading `#` symbol.
 
@@ -184,25 +191,25 @@ More documentation to follow&hellip;
 
 ## Dependency Specification
 
-The latest version of the library is 4.7, and it may be obtained from the Maven Central repository.
+The latest version of the library is 5.0, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>4.7</version>
+      <version>5.0</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:4.7'
+    implementation 'io.kjson:kjson-pointer:5.0'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:4.7")
+    implementation("io.kjson:kjson-pointer:5.0")
 ```
 
 Peter Wall
 
-2023-07-24
+2023-07-30
