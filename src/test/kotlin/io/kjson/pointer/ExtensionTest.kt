@@ -2,7 +2,7 @@
  * @(#) ExtensionTest.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2022 Peter Wall
+ * Copyright (c) 2022, 2023 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@
 package io.kjson.pointer
 
 import kotlin.test.Test
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.expect
 import kotlin.test.fail
@@ -51,6 +52,21 @@ class ExtensionTest {
         ref.ifPresent<JSONString>("a") {
             fail("Should not get here")
         }
+    }
+
+    @Test fun `should conditionally map value`() {
+        val json = JSON.parseObject("""{"a":1,"b":1,"c":2,"d":3,"e":5}""")
+        val ref = JSONRef(json)
+        val d = ref.mapIfPresent<JSONInt, Int>("d") {
+            it.value
+        }
+        expect(3) { d }
+        val x = ref.mapIfPresent<JSONInt, Int>("x") {
+            it.value
+        }
+        assertNull(x)
+        val e: Int? = ref.mapIfPresent("e") { prop: JSONInt -> prop.value }
+        expect(5) { e }
     }
 
     @Test fun `should iterate over object`() {

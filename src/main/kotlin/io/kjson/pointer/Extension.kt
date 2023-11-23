@@ -2,7 +2,7 @@
  * @(#) Extension.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2022 Peter Wall
+ * Copyright (c) 2022, 2023 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -46,6 +46,13 @@ inline fun <reified T : JSONValue?> JSONRef<JSONObject>.ifPresent(name: String, 
     if (hasChild<T>(name))
         child<T>(name).let { it.block(it.node) }
 }
+
+/**
+ * Map the [JSONObject] property referenced by `this` [JSONRef] and the specified key, using the provided mapping
+ * function, returning `null` if property not present.
+ */
+inline fun <reified T : JSONValue?, R : Any> JSONRef<JSONObject>.mapIfPresent(name: String,
+        block: JSONRef<T>.(T) -> R): R? = if (hasChild<T>(name)) child<T>(name).let { it.block(it.node) } else null
 
 /**
  * Iterate over the members of the [JSONObject] referenced by `this` [JSONRef].
