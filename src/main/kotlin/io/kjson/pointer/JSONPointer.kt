@@ -126,11 +126,13 @@ class JSONPointer internal constructor(internal val tokens: Array<String>) {
         return child(index.toString())
     }
 
-    /**
-     * Get the last token of the `JSONPointer` (the current property name or array index).
-     */
+    /** The last token of the `JSONPointer` (the current property name or array index). */
     val current: String?
         get() = tokens.lastOrNull()
+
+    /** `true` if the pointer is pointing to root. */
+    val isRoot: Boolean
+        get() = tokens.isEmpty()
 
     /**
      * Convert the `JSONPointer` to a form suitable for use in a URI fragment.
