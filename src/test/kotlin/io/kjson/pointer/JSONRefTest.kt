@@ -121,7 +121,9 @@ class JSONRefTest {
 
     @Test fun `should throw exception navigating to child of incorrect type`() {
         val ref1 = JSONRef(testObject)
-        assertFailsWith<JSONIncorrectTypeException> { ref1.child<JSONBoolean>("field1") }.let {
+        assertFailsWith<JSONIncorrectTypeException> {
+            ref1.child<JSONBoolean>("field1")
+        }.let {
             expect("Child") { it.nodeName }
             expect("JSONBoolean") { it.target }
             expect(JSONInt(123)) { it.value }

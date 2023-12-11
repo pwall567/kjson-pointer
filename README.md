@@ -119,7 +119,7 @@ To create a reference to a specified target child value:
 Like the earlier class, it combines a `JSONPointer` with the object into which the pointer navigates, but as a
 parameterised class, it allows the target element to be accessed in a type-safe manner.
 
-The parameter class may be any of the `JSONValue` sealed interface types:
+The parameter class may be any of the `JSONValue` sealed interface types (or their nullable forms):
 - `JSONString`
 - `JSONInt`
 - `JSONLong`
@@ -145,7 +145,7 @@ The value `ref` will be of type `JSONRef<JSONObject>`; it will be a reference to
 |-----------|---------------|------------------------------------------|
 | `base`    | `JSONValue`   | The base JSON value                      |
 | `pointer` | `JSONPointer` | The `JSONPointer` to the referenced node |
-| `node`    | `J`           | The node (`J` a subclass of `JSONValue`) |
+| `node`    | `J`           | The node (`J` a subtype of `JSONValue?`) |
 
 To navigate to the `id` property of the object in the above example, expecting it to be a string:
 ```kotlin
@@ -153,6 +153,7 @@ To navigate to the `id` property of the object in the above example, expecting i
     val id = idRef.node
 ```
 `idRef` will be of type `JSONRef<JSONString>`, and `id` will be of type `JSONString`.
+The function will throw an exception if the property `id` is missing, is null or is not a `JSONString`
 
 Now imagine that the object contains a property named `address`, which is an array of address line strings:
 ```kotlin
@@ -178,7 +179,7 @@ This also illustrates the use of `JSONValue` as the parameterised type, to allow
 different types.
 When using a `JSONRef<JSONValue>`, the `isRef()` function tests whether the reference is to a node of a specific type:
 ```kotlin
-    if (genericRef.isRef<JSONBoolean>) {
+    if (genericRef.isRef<JSONBoolean>()) {
         // the node is Boolean
     }
 ```
@@ -191,25 +192,25 @@ More documentation to follow&hellip;
 
 ## Dependency Specification
 
-The latest version of the library is 5.2, and it may be obtained from the Maven Central repository.
+The latest version of the library is 6.0, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>5.2</version>
+      <version>6.0</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:5.2'
+    implementation 'io.kjson:kjson-pointer:6.0'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:5.2")
+    implementation("io.kjson:kjson-pointer:6.0")
 ```
 
 Peter Wall
 
-2023-11-20
+2023-12-11

@@ -2,9 +2,14 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [Unreleased]
+## [6.0] - 2023-12-11
 ### Changed
 - `JSONPointer`: added `isRoot`
+- `Extension.kt`: added `optionalString`, `optionalBoolean`, `optionalInt`, `optionalLong`, `optionalDecimal`
+- `Extension.kt`: added `optionalChild`, various other improvements
+- `JSONRef`: extended `of()` functions to allow nullable types in result, added `untyped()` (these changes to various
+  functions probably constitute a breaking change)
+- `JSONReference`: added possible future deprecation notice
 
 ## [5.2] - 2023-11-20
 ### Changed

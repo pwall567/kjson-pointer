@@ -35,6 +35,9 @@ import io.kjson.JSON.toJSON
  * object to be used (and passed as a parameter or a return value between functions) in the common case of a pointer
  * being employed to navigate a tree of JSON values.
  *
+ * **NOTE:** This class has been largely superseded by the strongly-typed [JSONRef] class, and may be deprecated or
+ * removed in the future.
+ *
  * @author  Peter Wall
  */
 class JSONReference internal constructor(val base: JSONValue?, tokens: Array<String>, val valid: Boolean,

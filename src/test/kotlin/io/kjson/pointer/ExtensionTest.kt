@@ -26,16 +26,27 @@
 package io.kjson.pointer
 
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.test.expect
 import kotlin.test.fail
 
+import java.math.BigDecimal
+
 import io.kjson.JSON
+import io.kjson.JSON.asInt
+import io.kjson.JSONArray
 import io.kjson.JSONBoolean
+import io.kjson.JSONIncorrectTypeException
 import io.kjson.JSONInt
+import io.kjson.JSONObject
 import io.kjson.JSONString
+import io.kjson.pointer.test.SampleJSON.testArray
 import io.kjson.pointer.test.SampleJSON.testMixedArray
+import io.kjson.pointer.test.SampleJSON.testObject
 import io.kjson.pointer.test.SampleJSON.testObjectWithNull
 
 class ExtensionTest {
@@ -54,6 +65,22 @@ class ExtensionTest {
         }
     }
 
+    @Test fun `should unconditionally map value`() {
+        val json = JSON.parseObject("""{"a":1,"b":1,"c":2,"d":3,"e":5}""")
+        val ref = JSONRef(json)
+        val d = ref.map<JSONInt, Int>("d") {
+            it.value
+        }
+        expect(3) { d }
+        assertFailsWith<JSONPointerException> {
+            ref.map<JSONInt, Int>("x") { it.value }
+        }.let {
+            expect("Node does not exist - \"/x\"") { it.message }
+        }
+        val e: Int = ref.map("e") { prop: JSONInt -> prop.value }
+        expect(5) { e }
+    }
+
     @Test fun `should conditionally map value`() {
         val json = JSON.parseObject("""{"a":1,"b":1,"c":2,"d":3,"e":5}""")
         val ref = JSONRef(json)
@@ -69,6 +96,114 @@ class ExtensionTest {
         expect(5) { e }
     }
 
+    @Test fun `should get optional String`() {
+        val json = JSON.parseObject("""{"aaa":"Hello","bbb":"World","xxx":999}""")
+        val ref = JSONRef(json)
+        expect("Hello") { ref.optionalString("aaa") }
+        expect("World") { ref.optionalString("bbb") }
+        assertNull(ref.optionalString("ccc"))
+        assertFailsWith<JSONIncorrectTypeException> { ref.optionalString("xxx") }.let {
+            expect("Node not correct type (String), was 999, at /xxx") { it.message }
+            expect("Node") { it.nodeName }
+            expect("String") { it.target }
+            expect(JSONInt(999)) { it.value }
+            expect(JSONPointer("/xxx")) { it.key }
+        }
+    }
+
+    @Test fun `should get optional Boolean`() {
+        val json = JSON.parseObject("""{"aaa":true,"bbb":false,"xxx":999}""")
+        val ref = JSONRef(json)
+        expect(true) { ref.optionalBoolean("aaa") }
+        expect(false) { ref.optionalBoolean("bbb") }
+        assertNull(ref.optionalBoolean("ccc"))
+        assertFailsWith<JSONIncorrectTypeException> { ref.optionalBoolean("xxx") }.let {
+            expect("Node not correct type (Boolean), was 999, at /xxx") { it.message }
+            expect("Node") { it.nodeName }
+            expect("Boolean") { it.target }
+            expect(JSONInt(999)) { it.value }
+            expect(JSONPointer("/xxx")) { it.key }
+        }
+    }
+
+    @Test fun `should get optional Int`() {
+        val json = JSON.parseObject("""{"aaa":123,"bbb":456,"xxx":"wrong"}""")
+        val ref = JSONRef(json)
+        expect(123) { ref.optionalInt("aaa") }
+        expect(456) { ref.optionalInt("bbb") }
+        assertNull(ref.optionalInt("ccc"))
+        assertFailsWith<JSONIncorrectTypeException> { ref.optionalInt("xxx") }.let {
+            expect("Node not correct type (Int), was \"wrong\", at /xxx") { it.message }
+            expect("Node") { it.nodeName }
+            expect("Int") { it.target }
+            expect(JSONString("wrong")) { it.value }
+            expect(JSONPointer("/xxx")) { it.key }
+        }
+    }
+
+    @Test fun `should get optional Long`() {
+        val json = JSON.parseObject("""{"aaa":123,"bbb":123456789123456789,"xxx":"wrong"}""")
+        val ref = JSONRef(json)
+        expect(123) { ref.optionalLong("aaa") }
+        expect(123456789123456789) { ref.optionalLong("bbb") }
+        assertNull(ref.optionalLong("ccc"))
+        assertFailsWith<JSONIncorrectTypeException> { ref.optionalLong("xxx") }.let {
+            expect("Node not correct type (Long), was \"wrong\", at /xxx") { it.message }
+            expect("Node") { it.nodeName }
+            expect("Long") { it.target }
+            expect(JSONString("wrong")) { it.value }
+            expect(JSONPointer("/xxx")) { it.key }
+        }
+    }
+
+    @Test fun `should get optional Decimal`() {
+        val json = JSON.parseObject("""{"aaa":123,"bbb":123456789123456789,"ccc":1.5,"xxx":"wrong"}""")
+        val ref = JSONRef(json)
+        expect(BigDecimal(123)) { ref.optionalDecimal("aaa") }
+        expect(BigDecimal(123456789123456789)) { ref.optionalDecimal("bbb") }
+        expect(BigDecimal("1.5")) { ref.optionalDecimal("ccc") }
+        assertNull(ref.optionalDecimal("ddd"))
+        assertFailsWith<JSONIncorrectTypeException> { ref.optionalDecimal("xxx") }.let {
+            expect("Node not correct type (Decimal), was \"wrong\", at /xxx") { it.message }
+            expect("Node") { it.nodeName }
+            expect("Decimal") { it.target }
+            expect(JSONString("wrong")) { it.value }
+            expect(JSONPointer("/xxx")) { it.key }
+        }
+    }
+
+    @Test fun `should get optional child object`() {
+        val json = JSON.parseObject("""{"aaa":{"bbb":1000},"xxx":999}""")
+        val ref = JSONRef(json)
+        val childRef = ref.optionalChild<JSONObject>("aaa")
+        assertNotNull(childRef)
+        expect(1000) { childRef.node["bbb"].asInt }
+        assertNull(ref.optionalChild<JSONObject>("ccc"))
+        assertFailsWith<JSONIncorrectTypeException> { ref.optionalChild<JSONObject>("xxx") }.let {
+            expect("Child not correct type (JSONObject), was 999, at /xxx") { it.message }
+            expect("Child") { it.nodeName }
+            expect("JSONObject") { it.target }
+            expect(JSONInt(999)) { it.value }
+            expect(JSONPointer("/xxx")) { it.key }
+        }
+    }
+
+    @Test fun `should get optional child array`() {
+        val json = JSON.parseObject("""{"aaa":[888],"xxx":999}""")
+        val ref = JSONRef(json)
+        val childRef = ref.optionalChild<JSONArray>("aaa")
+        assertNotNull(childRef)
+        expect(888) { childRef.node[0].asInt }
+        assertNull(ref.optionalChild<JSONArray>("ccc"))
+        assertFailsWith<JSONIncorrectTypeException> { ref.optionalChild<JSONArray>("xxx") }.let {
+            expect("Child not correct type (JSONArray), was 999, at /xxx") { it.message }
+            expect("Child") { it.nodeName }
+            expect("JSONArray") { it.target }
+            expect(JSONInt(999)) { it.value }
+            expect(JSONPointer("/xxx")) { it.key }
+        }
+    }
+
     @Test fun `should iterate over object`() {
         val json = JSON.parseObject("""{"a":1,"b":1,"c":2,"d":3,"e":5}""")
         val ref = JSONRef(json)
@@ -76,6 +211,7 @@ class ExtensionTest {
         ref.forEachKey<JSONInt> {
             results.add(it to node.value)
         }
+        expect(5) { results.size }
         expect("a" to 1) { results[0] }
         expect("b" to 1) { results[1] }
         expect("c" to 2) { results[2] }
@@ -108,6 +244,20 @@ class ExtensionTest {
         assertTrue(child0.isRef<JSONInt>())
         val child1 = ref.untypedChild(1)
         assertTrue(child1.isRef<JSONBoolean>())
+    }
+
+    @Test fun `should create a reference to a JSONObject`() {
+        val ref = testObject.ref()
+        assertSame(ref.base, testObject)
+        assertSame(ref.node, testObject)
+        expect(JSONPointer.root) { ref.pointer }
+    }
+
+    @Test fun `should create a reference to a JSONArray`() {
+        val ref = testArray.ref()
+        assertSame(ref.base, testArray)
+        assertSame(ref.node, testArray)
+        expect(JSONPointer.root) { ref.pointer }
     }
 
 }

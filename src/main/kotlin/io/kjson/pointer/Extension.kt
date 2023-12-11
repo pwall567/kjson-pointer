@@ -25,22 +25,34 @@
 
 package io.kjson.pointer
 
-import kotlin.reflect.KClass
-import kotlin.reflect.typeOf
+import java.math.BigDecimal
 
 import io.kjson.JSONArray
 import io.kjson.JSONObject
+import io.kjson.JSONString
 import io.kjson.JSONValue
+import io.kjson.JSON.typeError
+import io.kjson.JSONBoolean
+import io.kjson.JSONDecimal
+import io.kjson.JSONInt
+import io.kjson.JSONLong
+import io.kjson.JSONNumber
 
 /**
  * Create a [JSONRef] from `this` [JSONValue] and the specified [JSONPointer].
  */
 inline infix fun <reified T : JSONValue> JSONValue.ptr(pointer: JSONPointer): JSONRef<T> =
-        JSONRef.of(T::class, this, pointer)
+        JSONRef.of(this, pointer)
 
 /**
  * Conditionally execute if [JSONObject] referenced by `this` [JSONRef] contains a member with the specified key and the
  * expected type.
+ *
+ * **NOTE:** this function will not throw an exception if the property is present but is of the wrong type, and it may
+ * be removed from future releases.  To achieve the same effect with strong type checking, use:
+ * ```
+ *     ref.optionalChild<JSONObject>("name")?.let { doSomething(it) }
+ * ```
  */
 inline fun <reified T : JSONValue?> JSONRef<JSONObject>.ifPresent(name: String, block: JSONRef<T>.(T) -> Unit) {
     if (hasChild<T>(name))
@@ -49,69 +61,117 @@ inline fun <reified T : JSONValue?> JSONRef<JSONObject>.ifPresent(name: String, 
 
 /**
  * Map the [JSONObject] property referenced by `this` [JSONRef] and the specified key, using the provided mapping
+ * function.
+ */
+inline fun <reified T : JSONValue?, R : Any> JSONRef<JSONObject>.map(name: String, block: JSONRef<T>.(T) -> R): R =
+    child<T>(name).let { it.block(it.node) }
+
+/**
+ * Map the [JSONObject] property referenced by `this` [JSONRef] and the specified key, using the provided mapping
  * function, returning `null` if property not present.
+ *
+ * **NOTE:** this function will not throw an exception if the property is present but is of the wrong type, and it may
+ * be removed from future releases.  To achieve the same effect with strong type checking, use:
+ * ```
+ *     ref.optionalChild<JSONObject>("name")?.let { doSomething(it) }
+ * ```
  */
 inline fun <reified T : JSONValue?, R : Any> JSONRef<JSONObject>.mapIfPresent(name: String,
         block: JSONRef<T>.(T) -> R): R? = if (hasChild<T>(name)) child<T>(name).let { it.block(it.node) } else null
 
 /**
+ * Get a [String] property from a [JSONObject] using `this` [JSONRef] and the specified key, or `null` if the property
+ * is not present (throws an exception if the property is present but is the wrong type).
+ */
+fun JSONRef<JSONObject>.optionalString(name: String): String? = node[name]?.let {
+    when (it) {
+        is JSONString -> it.value
+        else -> it.typeError("String", pointer.child(name))
+    }
+}
+
+/**
+ * Get a [Boolean] property from a [JSONObject] using `this` [JSONRef] and the specified key, or `null` if the property
+ * is not present (throws an exception if the property is present but is the wrong type).
+ */
+fun JSONRef<JSONObject>.optionalBoolean(name: String): Boolean? = node[name]?.let {
+    when (it) {
+        is JSONBoolean -> it.value
+        else -> it.typeError("Boolean", pointer.child(name))
+    }
+}
+
+/**
+ * Get an [Int] property from a [JSONObject] using `this` [JSONRef] and the specified key, or `null` if the property is
+ * not present (throws an exception if the property is present but is the wrong type).
+ */
+fun JSONRef<JSONObject>.optionalInt(name: String): Int? = node[name]?.let {
+    when {
+        it is JSONNumber && it.isInt() -> it.toInt()
+        else -> it.typeError("Int", pointer.child(name))
+    }
+}
+
+/**
+ * Get a [Long] property from a [JSONObject] using `this` [JSONRef] and the specified key, or `null` if the property is
+ * not present (throws an exception if the property is present but is not an [Int] or [Long]).
+ */
+fun JSONRef<JSONObject>.optionalLong(name: String): Long? = node[name]?.let {
+    when {
+        it is JSONNumber && it.isLong() -> it.toLong()
+        else -> it.typeError("Long", pointer.child(name))
+    }
+}
+
+/**
+ * Get a [BigDecimal] property from a [JSONObject] using `this` [JSONRef] and the specified key, or `null` if the
+ * property is not present (throws an exception if the property is present but is the wrong type).
+ */
+fun JSONRef<JSONObject>.optionalDecimal(name: String): BigDecimal? = node[name]?.let {
+    when (it) {
+        is JSONInt -> BigDecimal(it.value.toLong())
+        is JSONLong -> BigDecimal(it.value)
+        is JSONDecimal -> it.value
+        else -> it.typeError("Decimal", pointer.child(name))
+    }
+}
+
+/**
+ * Get a child property [JSONRef] from a [JSONObject] using `this` [JSONRef] and the specified key, or `null` if the
+ * property is not present (throws an exception if the property is present but is the wrong type).
+ */
+inline fun <reified T : JSONValue?> JSONRef<JSONObject>.optionalChild(name: String): JSONRef<T>? = node[name]?.let {
+    createTypedChildRef(name, it)
+}
+
+/**
  * Iterate over the members of the [JSONObject] referenced by `this` [JSONRef].
  */
 inline fun <reified T : JSONValue?> JSONRef<JSONObject>.forEachKey(block: JSONRef<T>.(String) -> Unit) {
-    node.keys.forEach { child<T>(it).block(it) }
+    node.entries.forEach { createTypedChildRef<T>(it.key, it.value).block(it.key) }
 }
 
 /**
  * Iterate over the members of the [JSONArray] referenced by `this` [JSONRef].
  */
 inline fun <reified T : JSONValue?> JSONRef<JSONArray>.forEach(block: JSONRef<T>.(Int) -> Unit) {
-    node.indices.forEach { child<T>(it).block(it) }
+    node.indices.forEach { createTypedChildRef<T>(it.toString(), node[it]).block(it) }
 }
 
 /**
  * Get the named child reference (strongly typed) from this [JSONObject] reference, using the implied child type.
  */
-@Suppress("UNCHECKED_CAST")
-inline fun <reified Q : JSONValue?> JSONRef<JSONObject>.child(name: String): JSONRef<Q> {
-    val type = typeOf<Q>()
-    val childClass = type.classifier as KClass<JSONValue>
-    return child(childClass, name, type.isMarkedNullable) as JSONRef<Q>
-}
-
-/**
- * Get the named child reference (strongly typed) from this [JSONObject] reference, using the supplied child class and
- * nullability.
- */
-fun <T : JSONValue> JSONRef<JSONObject>.child(
-    childClass: KClass<T>,
-    name: String,
-    nullable: Boolean = false,
-): JSONRef<T?> {
+inline fun <reified T : JSONValue?> JSONRef<JSONObject>.child(name: String): JSONRef<T> {
     checkName(name)
-    return createTypedChildRef(childClass, nullable, node[name], name)
+    return createTypedChildRef(name, node[name])
 }
 
 /**
  * Get the named child reference (strongly typed) from this [JSONArray] reference, using the implied child type.
  */
-@Suppress("UNCHECKED_CAST")
-inline fun <reified Q : JSONValue?> JSONRef<JSONArray>.child(index: Int): JSONRef<Q> {
-    val type = typeOf<Q>()
-    val childClass = type.classifier as KClass<JSONValue>
-    return child(childClass, index, type.isMarkedNullable) as JSONRef<Q>
-}
-
-/**
- * Get the named child reference (strongly typed) from this [JSONArray] reference, using the supplied child class and
- * nullability.
- */
-fun <T : JSONValue> JSONRef<JSONArray>.child(
-    childClass: KClass<T>,
-    index: Int,
-    nullable: Boolean = false,
-): JSONRef<T?> {
+inline fun <reified T : JSONValue?> JSONRef<JSONArray>.child(index: Int): JSONRef<T> {
     checkIndex(index)
-    return createTypedChildRef(childClass, nullable, node[index], index.toString())
+    return createTypedChildRef(index.toString(), node[index])
 }
 
 /**
@@ -131,23 +191,39 @@ fun JSONRef<JSONArray>.untypedChild(index: Int): JSONRef<JSONValue?> {
 }
 
 /**
- * Test whether this [JSONObject] reference has the named child.
+ * Test whether this [JSONObject] reference has the named child with the implied type.
  */
 inline fun <reified T : JSONValue?> JSONRef<JSONObject>.hasChild(name: String): Boolean =
         node.containsKey(name) && node[name] is T
 
 /**
- * Test whether this [JSONArray] reference has a child at the given index.
+ * Test whether this [JSONArray] reference has a child at the given index with the implied type.
  */
 inline fun <reified T : JSONValue?> JSONRef<JSONArray>.hasChild(index: Int): Boolean =
         index >= 0 && index < node.size && node[index] is T
 
-internal fun JSONRef<JSONObject>.checkName(name: String) {
+/**
+ * Check that this [JSONObject] reference has the named child, and throw an exception if not.
+ */
+fun JSONRef<JSONObject>.checkName(name: String) {
     if (!node.containsKey(name))
         JSONPointer.pointerError("Node does not exist", "$pointer/$name")
 }
 
-internal fun JSONRef<JSONArray>.checkIndex(index: Int) {
+/**
+ * Check that this [JSONArray] reference has a child at the given index, and throw an exception if not.
+ */
+fun JSONRef<JSONArray>.checkIndex(index: Int) {
     if (index !in node.indices)
         JSONPointer.pointerError("Index not valid", "$pointer/$index")
 }
+
+/**
+ * Create a reference to this [JSONObject].
+ */
+fun JSONObject.ref(): JSONRef<JSONObject> = JSONRef(this)
+
+/**
+ * Create a reference to this [JSONArray].
+ */
+fun JSONArray.ref(): JSONRef<JSONArray> = JSONRef(this)
