@@ -37,9 +37,9 @@ import java.math.BigDecimal
 import io.kjson.JSON.asInt
 import io.kjson.JSON.asString
 import io.kjson.JSONArray
-import io.kjson.JSONIncorrectTypeException
 import io.kjson.JSONInt
 import io.kjson.JSONString
+import io.kjson.JSONTypeException
 import io.kjson.JSONValue
 import io.kjson.pointer.test.SampleJSON.testObject
 
@@ -77,7 +77,7 @@ class IndexOpTest {
     }
 
     @Test fun `should fail on getString from object using pointer when not string`() {
-        assertFailsWith<JSONIncorrectTypeException> { testObject.getString(JSONPointer("/field1")) }.let {
+        assertFailsWith<JSONTypeException> { testObject.getString(JSONPointer("/field1")) }.let {
             expect("Node") { it.nodeName }
             expect("String") { it.target }
             expect(JSONPointer("/field1")) { it.key }
@@ -91,7 +91,7 @@ class IndexOpTest {
     }
 
     @Test fun `should fail on getLong from object using pointer when not long`() {
-        assertFailsWith<JSONIncorrectTypeException> { testObject.getLong(JSONPointer("/field2/0")) }.let {
+        assertFailsWith<JSONTypeException> { testObject.getLong(JSONPointer("/field2/0")) }.let {
             expect("Node") { it.nodeName }
             expect("Long") { it.target }
             expect(JSONPointer("/field2/0")) { it.key }
@@ -105,7 +105,7 @@ class IndexOpTest {
     }
 
     @Test fun `should fail on getInt from object using pointer when not int`() {
-        assertFailsWith<JSONIncorrectTypeException> { testObject.getInt(JSONPointer("/field2/1")) }.let {
+        assertFailsWith<JSONTypeException> { testObject.getInt(JSONPointer("/field2/1")) }.let {
             expect("Node") { it.nodeName }
             expect("Int") { it.target }
             expect(JSONPointer("/field2/1")) { it.key }
@@ -119,7 +119,7 @@ class IndexOpTest {
     }
 
     @Test fun `should fail on getShort from object using pointer when not short`() {
-        assertFailsWith<JSONIncorrectTypeException> { testObject.getShort(JSONPointer("/field2/0")) }.let {
+        assertFailsWith<JSONTypeException> { testObject.getShort(JSONPointer("/field2/0")) }.let {
             expect("Node") { it.nodeName }
             expect("Short") { it.target }
             expect(JSONPointer("/field2/0")) { it.key }
@@ -133,7 +133,7 @@ class IndexOpTest {
     }
 
     @Test fun `should fail on getByte from object using pointer when not byte`() {
-        assertFailsWith<JSONIncorrectTypeException> { testObject.getByte(JSONPointer("/field2/1")) }.let {
+        assertFailsWith<JSONTypeException> { testObject.getByte(JSONPointer("/field2/1")) }.let {
             expect("Node") { it.nodeName }
             expect("Byte") { it.target }
             expect(JSONPointer("/field2/1")) { it.key }
@@ -147,7 +147,7 @@ class IndexOpTest {
     }
 
     @Test fun `should fail on getULong from object using pointer when not unsigned long`() {
-        assertFailsWith<JSONIncorrectTypeException> { testObject.getULong(JSONPointer("/field2/0")) }.let {
+        assertFailsWith<JSONTypeException> { testObject.getULong(JSONPointer("/field2/0")) }.let {
             expect("Node") { it.nodeName }
             expect("ULong") { it.target }
             expect(JSONPointer("/field2/0")) { it.key }
@@ -161,7 +161,7 @@ class IndexOpTest {
     }
 
     @Test fun `should fail on getUInt from object using pointer when not unsigned int`() {
-        assertFailsWith<JSONIncorrectTypeException> { testObject.getUInt(JSONPointer("/field2/1")) }.let {
+        assertFailsWith<JSONTypeException> { testObject.getUInt(JSONPointer("/field2/1")) }.let {
             expect("Node") { it.nodeName }
             expect("UInt") { it.target }
             expect(JSONPointer("/field2/1")) { it.key }
@@ -175,7 +175,7 @@ class IndexOpTest {
     }
 
     @Test fun `should fail on getUShort from object using pointer when not unsigned short`() {
-        assertFailsWith<JSONIncorrectTypeException> { testObject.getUShort(JSONPointer("/field2/0")) }.let {
+        assertFailsWith<JSONTypeException> { testObject.getUShort(JSONPointer("/field2/0")) }.let {
             expect("Node") { it.nodeName }
             expect("UShort") { it.target }
             expect(JSONPointer("/field2/0")) { it.key }
@@ -189,7 +189,7 @@ class IndexOpTest {
     }
 
     @Test fun `should fail on getUByte from object using pointer when not unsigned byte`() {
-        assertFailsWith<JSONIncorrectTypeException> { testObject.getUByte(JSONPointer("/field2/1")) }.let {
+        assertFailsWith<JSONTypeException> { testObject.getUByte(JSONPointer("/field2/1")) }.let {
             expect("Node") { it.nodeName }
             expect("UByte") { it.target }
             expect(JSONPointer("/field2/1")) { it.key }
@@ -203,7 +203,7 @@ class IndexOpTest {
     }
 
     @Test fun `should fail on getDecimal from object using pointer when not decimal`() {
-        assertFailsWith<JSONIncorrectTypeException> { testObject.getDecimal(JSONPointer("/field2/0")) }.let {
+        assertFailsWith<JSONTypeException> { testObject.getDecimal(JSONPointer("/field2/0")) }.let {
             expect("Node") { it.nodeName }
             expect("BigDecimal") { it.target }
             expect(JSONPointer("/field2/0")) { it.key }
@@ -217,7 +217,7 @@ class IndexOpTest {
     }
 
     @Test fun `should fail on getBoolean from object using pointer when not boolean`() {
-        assertFailsWith<JSONIncorrectTypeException> { testObject.getBoolean(JSONPointer("/field1")) }.let {
+        assertFailsWith<JSONTypeException> { testObject.getBoolean(JSONPointer("/field1")) }.let {
             expect("Node") { it.nodeName }
             expect("Boolean") { it.target }
             expect(JSONPointer("/field1")) { it.key }
@@ -231,7 +231,7 @@ class IndexOpTest {
     }
 
     @Test fun `should fail on getArray from object using pointer when not array`() {
-        assertFailsWith<JSONIncorrectTypeException> { testObject.getArray(JSONPointer("/field1")) }.let {
+        assertFailsWith<JSONTypeException> { testObject.getArray(JSONPointer("/field1")) }.let {
             expect("Node") { it.nodeName }
             expect("JSONArray") { it.target }
             expect(JSONPointer("/field1")) { it.key }
@@ -245,7 +245,7 @@ class IndexOpTest {
     }
 
     @Test fun `should fail on getObject from object using pointer when not object`() {
-        assertFailsWith<JSONIncorrectTypeException> { testObject.getObject(JSONPointer("/field2")) }.let {
+        assertFailsWith<JSONTypeException> { testObject.getObject(JSONPointer("/field2")) }.let {
             expect("Node") { it.nodeName }
             expect("JSONObject") { it.target }
             expect(JSONPointer("/field2")) { it.key }

@@ -71,7 +71,7 @@ class JSONReference internal constructor(val base: JSONValue?, tokens: Array<Str
 
     fun child(index: Int): JSONReference {
         if (index < 0)
-            throw JSONPointerException("JSON Pointer index must not be negative")
+            throw JSONPointerException("JSON Pointer index must not be negative", "$this/$index")
         val name = index.toString()
         val newArray = pointer.tokens + name
         if (valid) {

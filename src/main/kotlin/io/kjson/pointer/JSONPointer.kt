@@ -122,7 +122,7 @@ class JSONPointer internal constructor(internal val tokens: Array<String>) {
      */
     fun child(index: Int): JSONPointer {
         if (index < 0)
-            throw JSONPointerException("JSON Pointer index must not be negative")
+            throw JSONPointerException("JSON Pointer index must not be negative", "$this/$index")
         return child(index.toString())
     }
 
@@ -345,7 +345,7 @@ class JSONPointer internal constructor(internal val tokens: Array<String>) {
                     it.decodeJSONPointer()
                 }
                 catch (e: Exception) {
-                    pointerError("Illegal token in JSON Pointer", it)
+                    pointerError("Illegal token in JSON Pointer", string)
                 }
             }.toTypedArray()
         }
@@ -366,8 +366,8 @@ class JSONPointer internal constructor(internal val tokens: Array<String>) {
             pointerError(mainText, toString(tokens, tokenIndex))
         }
 
-        internal fun pointerError(mainText: String, pointer: String): Nothing {
-            throw JSONPointerException(if (pointer.isEmpty()) mainText else "$mainText - \"$pointer\"")
+        internal fun pointerError(mainText: String, pointer: Any? = null): Nothing {
+            throw JSONPointerException(mainText, pointer)
         }
 
         internal fun rootParentError(): Nothing {

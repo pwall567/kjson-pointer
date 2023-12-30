@@ -32,4 +32,4 @@ import io.kjson.JSONException
  *
  * @author  Peter Wall
  */
-class JSONPointerException(message: String) : JSONException(message)
+class JSONPointerException(message: String, key: Any? = null) : JSONException(message, key)

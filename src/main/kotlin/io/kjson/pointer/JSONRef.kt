@@ -142,9 +142,7 @@ class JSONRef<out J : JSONValue?> internal constructor(
 
     override fun hashCode(): Int = base.hashCode() xor node.hashCode() xor pointer.hashCode()
 
-    override fun toString() = "JSONRef<${node.nodeClass()}>(pointer=\"$pointer\",node=${node?.toJSON()})"
-
-    private fun JSONValue?.nodeClass(): String = if (this == null) "JSONValue?" else this::class.simpleName ?: "unknown"
+    override fun toString() = pointer.toString()
 
     companion object {
 

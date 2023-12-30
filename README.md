@@ -9,7 +9,7 @@ Kotlin implementation of [JSON Pointer](https://tools.ietf.org/html/rfc6901).
 
 Note &ndash; **Breaking Change** &ndash; from version 5.0 of the library, the `tokens` array is no longer accessible as
 a `public` value.
-It was an oversight to allow it be accessed previously since array members may be modified, and a `JSONPointer` is
+It was an oversight to allow it to be accessible previously since array members may be modified, and a `JSONPointer` is
 intended to be immutable.
 The array of tokens may be obtained by the functions `tokensAsArray()` which returns a copy of the array, or
 `tokensAsList()` which returns an immutable `List`.
@@ -139,6 +139,12 @@ The usage of `JSONRef` is best explained be example:
 ```
 The value `ref` will be of type `JSONRef<JSONObject>`; it will be a reference to the root of the object tree.
 
+This may be simplified by the use of the `ref()` extension function:
+```kotlin
+    val jsonRef = JSON.parseObject("file.json").ref()
+```
+The result is the same; the only difference is that the syntax may be easier to read.
+
 `JSONRef<J>` exposes three properties:
 
 | Name      | Type          | Description                              |
@@ -146,6 +152,12 @@ The value `ref` will be of type `JSONRef<JSONObject>`; it will be a reference to
 | `base`    | `JSONValue`   | The base JSON value                      |
 | `pointer` | `JSONPointer` | The `JSONPointer` to the referenced node |
 | `node`    | `J`           | The node (`J` a subtype of `JSONValue?`) |
+
+#### Navigation
+
+`JSONRef` is ideally suited to the task of navigation a JSON structure.
+The `JSONRef` object itself is immutable, so to navigate to a nested part of a structure, the `child` operation creates
+a new `JSONRef` pointing to the appropriate location in the structure.
 
 To navigate to the `id` property of the object in the above example, expecting it to be a string:
 ```kotlin
@@ -157,13 +169,24 @@ The function will throw an exception if the property `id` is missing, is null or
 
 Now imagine that the object contains a property named `address`, which is an array of address line strings:
 ```kotlin
-    val address = ref.child<JSONArray>("address")
-    val line0 = address.child<JSONString>(0).node
+    val addressRef = ref.child<JSONArray>("address")
+    val line0Ref = addressRef.child<JSONString>(0)
+    val line0 = line0Ref.node
 ```
+`addressRef` will be of type `JSONRef<JSONArray>`, `line0Ref` will be of type `JSONRef<JSONString>` and `line0` will be
+of type `JSONString`.
 
-And to iterate over the address lines:
+To navigate to the parent node:
 ```kotlin
-    address.forEach<JSONString> {
+   val parentRef = addressRef.parent<JSONObject>()
+```
+In this example, `parentRef` will now be identical to the original `ref`.
+
+#### Iteration
+
+To iterate over the address lines from the example above:
+```kotlin
+    addressRef.forEach<JSONString> {
         // within this code, "this" is a JSONRef<JSONString>, and "it" is an Int (the index)
         println("Address line ${it + 1}: ${node.value}")
     }
@@ -175,8 +198,8 @@ Or over the properties of an object:
         // within this code, "this" is a JSONRef<JSONValue>, and "it" is a String (the object key / property name)
     }
 ```
-This also illustrates the use of `JSONValue` as the parameterised type, to allow for the case where properties are of
-different types.
+This also illustrates the use of `JSONValue` as the parameterised type &ndash; this is saying that the value may be any
+non-null `JSONValue`, to allow for the case where properties are of different types.
 When using a `JSONRef<JSONValue>`, the `isRef()` function tests whether the reference is to a node of a specific type:
 ```kotlin
     if (genericRef.isRef<JSONBoolean>()) {
@@ -188,29 +211,51 @@ and the `asRef()` function converts to a specified type, throwing an exception i
     val stringRef = genericRef.asRef<JSONString>()
 ```
 
+#### Optional Properties
+
+There are a number of functions provided as extension functions on `JSONRef<JSONObject>` to simplify access to optional
+properties of the object:
+
+- `optionalString(name)`: returns the `String` value of the named property, or `null` if it is not present
+- `optionalInt(name)`: returns the `Int` value of the named property, or `null` if it is not present
+- `optionalLong(name)`: returns the `Long` value of the named property, or `null` if it is not present
+- `optionalDecimal(name)`: returns the `BigDecimal` value of the named property, or `null` if it is not present
+- `optionalBoolean(name)`: returns the `Boolean` value of the named property, or `null` if it is not present
+
+In all cases, if the property is not of the required type, an exception is thrown detailing the expected type, the
+actual value and the location in the structure, in `JSONPointer` form.
+
+When the optional property is a nested sub-structure, the `optionalChild()` function may be used:
+```kotlin
+    ref.optionalChild<JsonObject>("address")?.apply {
+        // within this code, "this" is a JSONRef<JSONObject>
+    }
+```
+As with the other optional functions, if the property is present but of the wrong type, a detailed exception is thrown.
+
 More documentation to follow&hellip;
 
 ## Dependency Specification
 
-The latest version of the library is 6.0, and it may be obtained from the Maven Central repository.
+The latest version of the library is 6.1, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>6.0</version>
+      <version>6.1</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:6.0'
+    implementation 'io.kjson:kjson-pointer:6.1'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:6.0")
+    implementation("io.kjson:kjson-pointer:6.1")
 ```
 
 Peter Wall
 
-2023-12-11
+2023-12-25

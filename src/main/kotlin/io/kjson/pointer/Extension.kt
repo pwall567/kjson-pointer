@@ -31,12 +31,13 @@ import io.kjson.JSONArray
 import io.kjson.JSONObject
 import io.kjson.JSONString
 import io.kjson.JSONValue
-import io.kjson.JSON.typeError
 import io.kjson.JSONBoolean
 import io.kjson.JSONDecimal
 import io.kjson.JSONInt
 import io.kjson.JSONLong
 import io.kjson.JSONNumber
+import io.kjson.JSONPrimitive
+import io.kjson.JSON.typeError
 
 /**
  * Create a [JSONRef] from `this` [JSONValue] and the specified [JSONPointer].
@@ -60,9 +61,36 @@ inline fun <reified T : JSONValue?> JSONRef<JSONObject>.ifPresent(name: String, 
 }
 
 /**
+ * Map the values of the [JSONArray] referenced by `this` [JSONRef] to an array of the primitive type for the
+ * [JSONValue].
+ */
+inline fun <reified T : JSONPrimitive<R>, R : Any> JSONRef<JSONArray>.map(): List<R> =
+        List(node.size) { index -> child<T>(index).node.value }
+
+/**
+ * Map the values of the [JSONArray] referenced by `this` [JSONRef] to an array of the target type, applying a
+ * transformation to each item.
+ */
+inline fun <reified T : JSONValue?, R> JSONRef<JSONArray>.map(transform: JSONRef<T>.(Int) -> R) : List<R> =
+        List(node.size) { index -> child<T>(index).transform(index) }
+
+/**
+ * Return `true` if any of the values of the [JSONArray] referenced by `this` [JSONRef] satisfy a given predicate.
+ */
+inline fun <reified T : JSONValue?> JSONRef<JSONArray>.any(predicate: JSONRef<T>.(Int) -> Boolean) : Boolean =
+        node.indices.any { child<T>(it).predicate(it) }
+
+/**
+ * Return `true` if all of the values of the [JSONArray] referenced by `this` [JSONRef] satisfy a given predicate.
+ */
+inline fun <reified T : JSONValue?> JSONRef<JSONArray>.all(predicate: JSONRef<T>.(Int) -> Boolean) : Boolean =
+        node.indices.all { child<T>(it).predicate(it) }
+
+/**
  * Map the [JSONObject] property referenced by `this` [JSONRef] and the specified key, using the provided mapping
  * function.
  */
+@Deprecated("Confusing function name", ReplaceWith("child(name).apply(block)"))
 inline fun <reified T : JSONValue?, R : Any> JSONRef<JSONObject>.map(name: String, block: JSONRef<T>.(T) -> R): R =
     child<T>(name).let { it.block(it.node) }
 
@@ -70,12 +98,13 @@ inline fun <reified T : JSONValue?, R : Any> JSONRef<JSONObject>.map(name: Strin
  * Map the [JSONObject] property referenced by `this` [JSONRef] and the specified key, using the provided mapping
  * function, returning `null` if property not present.
  *
- * **NOTE:** this function will not throw an exception if the property is present but is of the wrong type, and it may
- * be removed from future releases.  To achieve the same effect with strong type checking, use:
+ * **NOTE:** this function will not throw an exception if the property is present but is of the wrong type, and it has
+ * been deprecated.  To achieve the same effect with strong type checking, use:
  * ```
  *     ref.optionalChild<JSONObject>("name")?.let { doSomething(it) }
  * ```
  */
+@Deprecated("Does not check property type", ReplaceWith("optionalChild(name)?.apply(block)"))
 inline fun <reified T : JSONValue?, R : Any> JSONRef<JSONObject>.mapIfPresent(name: String,
         block: JSONRef<T>.(T) -> R): R? = if (hasChild<T>(name)) child<T>(name).let { it.block(it.node) } else null
 
@@ -207,7 +236,7 @@ inline fun <reified T : JSONValue?> JSONRef<JSONArray>.hasChild(index: Int): Boo
  */
 fun JSONRef<JSONObject>.checkName(name: String) {
     if (!node.containsKey(name))
-        JSONPointer.pointerError("Node does not exist", "$pointer/$name")
+        JSONPointer.pointerError("Node does not exist", pointer.child(name))
 }
 
 /**
@@ -215,15 +244,14 @@ fun JSONRef<JSONObject>.checkName(name: String) {
  */
 fun JSONRef<JSONArray>.checkIndex(index: Int) {
     if (index !in node.indices)
-        JSONPointer.pointerError("Index not valid", "$pointer/$index")
+        JSONPointer.pointerError("Index not valid", pointer.child(index.toString()))
 }
 
 /**
- * Create a reference to this [JSONObject].
+ * Create a reference to this [JSONValue].
  */
-fun JSONObject.ref(): JSONRef<JSONObject> = JSONRef(this)
+fun <T : JSONValue?> T.ref(): JSONRef<T> = JSONRef(this)
 
-/**
- * Create a reference to this [JSONArray].
- */
-fun JSONArray.ref(): JSONRef<JSONArray> = JSONRef(this)
+/** The value of the node. */
+val <T> JSONRef<JSONPrimitive<T>>.value: T
+    get() = node.value

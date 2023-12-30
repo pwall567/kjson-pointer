@@ -36,11 +36,11 @@ import kotlin.test.expect
 import io.kjson.JSON
 import io.kjson.JSONArray
 import io.kjson.JSONBoolean
-import io.kjson.JSONIncorrectTypeException
 import io.kjson.JSONInt
 import io.kjson.JSONNumber
 import io.kjson.JSONObject
 import io.kjson.JSONString
+import io.kjson.JSONTypeException
 import io.kjson.JSONValue
 import io.kjson.pointer.test.SampleJSON.testMixedArray
 import io.kjson.pointer.test.SampleJSON.testObject
@@ -54,7 +54,6 @@ class JSONRefTest {
         assertSame(testString, ref1.base)
         expect(JSONPointer.root) { ref1.pointer }
         assertSame(testString, ref1.node)
-        expect("JSONRef<JSONString>(pointer=\"\",node=\"test1\")") { ref1.toString() }
     }
 
     @Test fun `should correctly report hasChild for object`() {
@@ -103,7 +102,6 @@ class JSONRefTest {
         val ref2 = ref1.child<JSONInt>("field1")
         expect(123) { ref2.node.value }
         expect(JSONPointer("/field1")) { ref2.pointer }
-        expect("""JSONRef<JSONInt>(pointer="/field1",node=123)""") { ref2.toString() }
     }
 
     @Test fun `should navigate to nullable child of object`() {
@@ -112,16 +110,14 @@ class JSONRefTest {
         val ref2 = ref1.child<JSONInt?>("field1")
         expect(123) { ref2.node?.value }
         expect(JSONPointer("/field1")) { ref2.pointer }
-        expect("""JSONRef<JSONInt>(pointer="/field1",node=123)""") { ref2.toString() }
         assertTrue(ref1.hasChild<JSONInt?>("field3"))
         val ref3 = ref1.child<JSONInt?>("field3")
         assertNull(ref3.node)
-        expect("""JSONRef<JSONValue?>(pointer="/field3",node=null)""") { ref3.toString() }
     }
 
     @Test fun `should throw exception navigating to child of incorrect type`() {
         val ref1 = JSONRef(testObject)
-        assertFailsWith<JSONIncorrectTypeException> {
+        assertFailsWith<JSONTypeException> {
             ref1.child<JSONBoolean>("field1")
         }.let {
             expect("Child") { it.nodeName }
@@ -134,7 +130,7 @@ class JSONRefTest {
 
     @Test fun `should throw exception navigating to null child of non-nullable type`() {
         val ref1 = JSONRef(testObjectWithNull)
-        assertFailsWith<JSONIncorrectTypeException> { ref1.child<JSONInt>("field3") }.let {
+        assertFailsWith<JSONTypeException> { ref1.child<JSONInt>("field3") }.let {
             expect("Child") { it.nodeName }
             expect("JSONInt") { it.target }
             assertNull(it.value)
@@ -145,7 +141,7 @@ class JSONRefTest {
 
     @Test fun `should throw exception navigating to child of incorrect nullable type`() {
         val ref1 = JSONRef(testObject)
-        assertFailsWith<JSONIncorrectTypeException> { ref1.child<JSONString?>("field1") }.let {
+        assertFailsWith<JSONTypeException> { ref1.child<JSONString?>("field1") }.let {
             expect("Child") { it.nodeName }
             expect("JSONString?") { it.target }
             expect(JSONInt(123)) { it.value }
@@ -173,7 +169,7 @@ class JSONRefTest {
 
     @Test fun `should throw exception when parent is not correct type`() {
         val refChild = JSONRef(testObject).child<JSONInt>("field1")
-        assertFailsWith<JSONIncorrectTypeException> { refChild.parent<JSONArray>() }.let {
+        assertFailsWith<JSONTypeException> { refChild.parent<JSONArray>() }.let {
             expect("Parent") { it.nodeName }
             expect("JSONArray") { it.target }
             expect(testObject) { it.value }
@@ -218,7 +214,7 @@ class JSONRefTest {
     @Test fun `should throw exception converting to ref of incorrect type`() {
         val str = JSONString("mango")
         val ref = JSONRef<JSONValue>(str)
-        assertFailsWith<JSONIncorrectTypeException> { ref.asRef<JSONObject>() }.let {
+        assertFailsWith<JSONTypeException> { ref.asRef<JSONObject>() }.let {
             expect("Node") { it.nodeName }
             expect("JSONObject") { it.target }
             expect(JSONString("mango")) { it.value }
@@ -260,7 +256,7 @@ class JSONRefTest {
     }
 
     @Test fun `should throw exception building JSONRef using of with wrong type`() {
-        assertFailsWith<JSONIncorrectTypeException> { JSONRef.of<JSONString>(testObject, JSONPointer("/field1")) }.let {
+        assertFailsWith<JSONTypeException> { JSONRef.of<JSONString>(testObject, JSONPointer("/field1")) }.let {
             expect("Node") { it.nodeName }
             expect("JSONString") { it.target }
             expect(JSONInt(123)) { it.value }
@@ -283,7 +279,7 @@ class JSONRefTest {
     @Test fun `should throw exception on null node when building JSONRef using of`() {
         val json = JSON.parseObject("""{"a":{"b":null}}""")
         assertFailsWith<JSONPointerException> { JSONRef.of<JSONInt>(json, JSONPointer("/a/b/c")) }.let {
-            expect("Node is null - \"/a/b\"") { it.message }
+            expect("Node is null, at /a/b") { it.message }
         }
     }
 

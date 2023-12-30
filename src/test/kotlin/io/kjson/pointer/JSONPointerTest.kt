@@ -37,10 +37,10 @@ import java.io.File
 
 import io.kjson.JSON
 import io.kjson.JSONArray
-import io.kjson.JSONIncorrectTypeException
 import io.kjson.JSONInt
 import io.kjson.JSONObject
 import io.kjson.JSONString
+import io.kjson.JSONTypeException
 import io.kjson.JSONValue
 import io.kjson.pointer.JSONPointer.Companion.encodeJSONPointer
 import io.kjson.pointer.JSONPointer.Companion.decodeJSONPointer
@@ -201,7 +201,7 @@ class JSONPointerTest {
 
     @Test fun `should give correct error message on bad reference`() {
         assertFailsWith<JSONPointerException> { JSONPointer("/wrong/0").find(document) }.let {
-            expect("Can't resolve JSON Pointer - \"/wrong\"") { it.message }
+            expect("Can't resolve JSON Pointer, at /wrong") { it.message }
         }
     }
 
@@ -218,22 +218,22 @@ class JSONPointerTest {
 
     @Test fun `should reject invalid numeric index`() {
         assertFailsWith<JSONPointerException> { JSONPointer("/01").find(testArray) }.let {
-            expect("Illegal array index in JSON Pointer - \"/01\"") { it.message }
+            expect("Illegal array index in JSON Pointer, at /01") { it.message }
         }
         assertFailsWith<JSONPointerException> { JSONPointer("/").find(testArray) }.let {
-            expect("Illegal array index in JSON Pointer - \"/\"") { it.message }
+            expect("Illegal array index in JSON Pointer, at /") { it.message }
         }
         assertFailsWith<JSONPointerException> { JSONPointer("/A").find(testArray) }.let {
-            expect("Illegal array index in JSON Pointer - \"/A\"") { it.message }
+            expect("Illegal array index in JSON Pointer, at /A") { it.message }
         }
         assertFailsWith<JSONPointerException> { JSONPointer("/999999999").find(testArray) }.let {
-            expect("Illegal array index in JSON Pointer - \"/999999999\"") { it.message }
+            expect("Illegal array index in JSON Pointer, at /999999999") { it.message }
         }
         assertFailsWith<JSONPointerException> { JSONPointer("/-1").find(testArray) }.let {
-            expect("Illegal array index in JSON Pointer - \"/-1\"") { it.message }
+            expect("Illegal array index in JSON Pointer, at /-1") { it.message }
         }
         assertFailsWith<JSONPointerException> { JSONPointer("/99").find(testArray) }.let {
-            expect("Array index out of range in JSON Pointer - \"/99\"") { it.message }
+            expect("Array index out of range in JSON Pointer, at /99") { it.message }
         }
     }
 
@@ -288,7 +288,7 @@ class JSONPointerTest {
     }
 
     @Test fun `should throw exception when findObject target is not an object`() {
-        assertFailsWith<JSONIncorrectTypeException> { JSONPointer("/field1").findObject(testNestedObject) }.let {
+        assertFailsWith<JSONTypeException> { JSONPointer("/field1").findObject(testNestedObject) }.let {
             expect("Node not correct type (JSONObject), was 123, at /field1") { it.message }
         }
     }
@@ -299,7 +299,7 @@ class JSONPointerTest {
     }
 
     @Test fun `should throw exception when findArray target is not an array`() {
-        assertFailsWith<JSONIncorrectTypeException> { JSONPointer("/field1").findArray(testObject) }.let {
+        assertFailsWith<JSONTypeException> { JSONPointer("/field1").findArray(testObject) }.let {
             expect("Node not correct type (JSONArray), was 123, at /field1") { it.message }
         }
     }

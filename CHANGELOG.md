@@ -2,6 +2,15 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [6.1] - 2023-12-24
+### Changed
+- `Extension.kt`: deprecated `JSONRef<JSONObject>.map()` and `mapIfPresent()`
+- `Extension.kt`: added `JSONRef<JSONArray>.map()`, `JSONRef<JSONArray>.any()` and `JSONRef<JSONArray>.all()`
+- `Extension.kt`: added `JSONRef<JSONPrimitive<*>>.value`
+- `Extension.kt`: genericised `JSONValue.ref()`
+- `JSONRef`: simplified `toString()` to allow it to be used as `key` in error messages
+- `pom.xml`: updated dependency version
+
 ## [6.0] - 2023-12-11
 ### Changed
 - `JSONPointer`: added `isRoot`
