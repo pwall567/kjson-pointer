@@ -2,6 +2,10 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.1] - 2024-01-01
+### Changed
+- `pom.xml`: updated dependency version
+
 ## [7.0] - 2023-12-31
 ### Changed
 - `Extension.kt`: deprecated `JSONRef<JSONObject>.map()` and `mapIfPresent()`
