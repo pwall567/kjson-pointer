@@ -2,7 +2,7 @@
  * @(#) ExtensionTest.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2022, 2023 Peter Wall
+ * Copyright (c) 2022, 2023, 2024 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,9 +42,11 @@ import io.kjson.JSON.asInt
 import io.kjson.JSONArray
 import io.kjson.JSONBoolean
 import io.kjson.JSONInt
+import io.kjson.JSONNumber
 import io.kjson.JSONObject
 import io.kjson.JSONString
 import io.kjson.JSONTypeException
+import io.kjson.JSONValue
 import io.kjson.pointer.test.SampleJSON.testArray
 import io.kjson.pointer.test.SampleJSON.testMixedArray
 import io.kjson.pointer.test.SampleJSON.testObject
@@ -76,7 +78,7 @@ class ExtensionTest {
     @Test fun `should throw exception when 'map' operation finds invalid value`() {
         val json = JSON.parseArray("""[1,10,"error",1000,10000]""")
         val ref = JSONRef(json)
-        assertFailsWith<JSONTypeException> { ref.map<JSONInt, Int> { value * (it + 1) } }.let {
+        assertFailsWith<JSONTypeException> { ref.map<JSONInt, Int>() }.let {
             expect("Child not correct type (JSONInt), was \"error\", at /2") { it.message }
             expect("Child") { it.nodeName }
             expect("JSONInt") { it.target }
@@ -359,6 +361,120 @@ class ExtensionTest {
         assertSame(ref.base, testArray)
         assertSame(ref.node, testArray)
         expect(JSONPointer.root) { ref.pointer }
+    }
+
+    @Test fun `should correctly report hasChild for object`() {
+        val ref1 = JSONRef(testObject)
+        assertTrue(ref1.hasChild<JSONInt>("field1"))
+        assertTrue(ref1.hasChild<JSONArray>("field2"))
+        assertFalse(ref1.hasChild<JSONInt>("field3"))
+        assertFalse(ref1.hasChild<JSONString>("field1"))
+    }
+
+    @Test fun `should correctly report nullable hasChild for object`() {
+        val ref = JSONRef(testObjectWithNull)
+        assertTrue(ref.hasChild<JSONInt>("field1"))
+        assertTrue(ref.hasChild<JSONInt?>("field1"))
+        assertTrue(ref.hasChild<JSONInt?>("field3"))
+        assertFalse(ref.hasChild<JSONInt>("field3"))
+        assertFalse(ref.hasChild<JSONInt?>("field2"))
+        assertFalse(ref.hasChild<JSONInt?>("field9"))
+    }
+
+    @Test fun `should correctly report hasChild for array`() {
+        val ref1 = JSONRef(testMixedArray)
+        assertTrue(ref1.hasChild<JSONInt>(0))
+        assertTrue(ref1.hasChild<JSONNumber>(0))
+        assertTrue(ref1.hasChild<JSONBoolean>(1))
+        assertTrue(ref1.hasChild<JSONString>(2))
+        assertTrue(ref1.hasChild<JSONArray>(3))
+        assertFalse(ref1.hasChild<JSONInt>(1))
+        assertFalse(ref1.hasChild<JSONValue>(4))
+    }
+
+    @Test fun `should correctly report nullable hasChild for array`() {
+        val ref1 = JSONRef(testMixedArray)
+        assertTrue(ref1.hasChild<JSONInt?>(0))
+        assertTrue(ref1.hasChild<JSONNumber?>(0))
+        assertTrue(ref1.hasChild<JSONBoolean?>(1))
+        assertTrue(ref1.hasChild<JSONString?>(2))
+        assertTrue(ref1.hasChild<JSONArray?>(3))
+        assertTrue(ref1.hasChild<JSONInt?>(4))
+        assertFalse(ref1.hasChild<JSONString?>(0))
+    }
+
+    @Test fun `should navigate to child of object`() {
+        val ref1 = JSONRef(testObject)
+        assertTrue(ref1.hasChild<JSONInt>("field1"))
+        val ref2 = ref1.child<JSONInt>("field1")
+        expect(123) { ref2.node.value }
+        expect(JSONPointer("/field1")) { ref2.pointer }
+    }
+
+    @Test fun `should navigate to nullable child of object`() {
+        val ref1 = JSONRef(testObjectWithNull)
+        assertTrue(ref1.hasChild<JSONInt?>("field1"))
+        val ref2 = ref1.child<JSONInt?>("field1")
+        expect(123) { ref2.node?.value }
+        expect(JSONPointer("/field1")) { ref2.pointer }
+        assertTrue(ref1.hasChild<JSONInt?>("field3"))
+        val ref3 = ref1.child<JSONInt?>("field3")
+        assertNull(ref3.node)
+    }
+
+    @Test fun `should throw exception navigating to child of incorrect type`() {
+        val ref1 = JSONRef(testObject)
+        assertFailsWith<JSONTypeException> {
+            ref1.child<JSONBoolean>("field1")
+        }.let {
+            expect("Child") { it.nodeName }
+            expect("JSONBoolean") { it.target }
+            expect(JSONInt(123)) { it.value }
+            expect(JSONPointer("/field1")) { it.key }
+            expect("Child not correct type (JSONBoolean), was 123, at /field1") { it.message }
+        }
+    }
+
+    @Test fun `should throw exception navigating to null child of non-nullable type`() {
+        val ref1 = JSONRef(testObjectWithNull)
+        assertFailsWith<JSONTypeException> { ref1.child<JSONInt>("field3") }.let {
+            expect("Child") { it.nodeName }
+            expect("JSONInt") { it.target }
+            assertNull(it.value)
+            expect(JSONPointer("/field3")) { it.key }
+            expect("Child not correct type (JSONInt), was null, at /field3") { it.message }
+        }
+    }
+
+    @Test fun `should throw exception navigating to child of incorrect nullable type`() {
+        val ref1 = JSONRef(testObject)
+        assertFailsWith<JSONTypeException> { ref1.child<JSONString?>("field1") }.let {
+            expect("Child") { it.nodeName }
+            expect("JSONString?") { it.target }
+            expect(JSONInt(123)) { it.value }
+            expect(JSONPointer("/field1")) { it.key }
+            expect("Child not correct type (JSONString?), was 123, at /field1") { it.message }
+        }
+    }
+
+    @Test fun `should navigate to child of array`() {
+        val refArray = JSONRef(testMixedArray)
+        assertTrue(refArray.hasChild<JSONInt>(0))
+        with(refArray.child<JSONInt>(0)) {
+            expect(123) { node.value }
+            expect(JSONPointer("/0")) { pointer }
+        }
+    }
+
+    @Test fun `should build JSONRef using infix operator`() {
+        val ref1: JSONRef<JSONInt> = testObject ptr JSONPointer("/field1")
+        expect(123) { ref1.node.value }
+        val ref2: JSONRef<JSONString> = testObject ptr JSONPointer("/field2/1")
+        expect("def") { ref2.node.value }
+        val ref3 = ref2.parent<JSONArray>()
+        assertSame(testObject["field2"], ref3.node)
+        val ref4 = ref3.parent<JSONObject>()
+        assertSame(testObject, ref4.node)
     }
 
 }

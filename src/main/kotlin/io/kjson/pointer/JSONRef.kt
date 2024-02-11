@@ -2,7 +2,7 @@
  * @(#) JSONRef.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2022, 2023 Peter Wall
+ * Copyright (c) 2022, 2023, 2024 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -57,7 +57,7 @@ class JSONRef<out J : JSONValue?> internal constructor(
      */
     inline fun <reified T : JSONStructure<*>> parent(): JSONRef<T> = parent { parentNode ->
         if (parentNode !is T)
-            parentNode.typeError(typeOf<T>().refClassName(), pointer, nodeName = "Parent")
+            parentNode.typeError(typeOf<T>().refClassName(), pointer.parent(), nodeName = "Parent")
         parentNode
     }
 

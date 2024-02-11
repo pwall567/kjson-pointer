@@ -2,6 +2,11 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.2] - 2024-02-11
+### Changed
+- `pom.xml`: updated dependency version
+- tests: moved some tests to the appropriate class
+
 ## [7.1] - 2024-01-01
 ### Changed
 - `pom.xml`: updated dependency version
