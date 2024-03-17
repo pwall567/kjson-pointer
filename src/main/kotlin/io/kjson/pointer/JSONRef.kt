@@ -183,7 +183,7 @@ class JSONRef<out J : JSONValue?> internal constructor(
         fun untyped(base: JSONValue?, pointer: JSONPointer): JSONRef<JSONValue?> {
             val tokens = pointer.tokens
             val len = tokens.size
-            val nodes = Array<JSONValue?>(len) { null }
+            val nodes: Array<JSONValue?> = arrayOfNulls(len)
             var node: JSONValue? = base
             for (i in tokens.indices) {
                 val token = tokens[i]
