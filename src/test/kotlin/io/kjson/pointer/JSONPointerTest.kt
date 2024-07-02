@@ -2,7 +2,7 @@
  * @(#) JSONPointerTest.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2021, 2022, 2023 Peter Wall
+ * Copyright (c) 2021, 2022, 2023, 2024 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -199,6 +199,36 @@ class JSONPointerTest {
         assertSame(document, parentPointer2.find(document))
     }
 
+    @Test fun `should combine pointers using child pointer`() {
+        val startingPointer = JSONPointer("/abc/def/ghi")
+        val childPointer = JSONPointer("/jkl/mno")
+        expect("/abc/def/ghi/jkl/mno") { startingPointer.child(childPointer).toString() }
+    }
+
+    @Test fun `should combine pointers using parent pointer`() {
+        val startingPointer = JSONPointer("/abc/def/ghi")
+        val parentPointer = JSONPointer("/jkl/mno")
+        expect("/jkl/mno/abc/def/ghi") { startingPointer.withParent(parentPointer).toString() }
+    }
+
+    @Test fun `should combine pointers using parent element name`() {
+        val startingPointer = JSONPointer("/abc/def/ghi")
+        expect("/jkl/abc/def/ghi") { startingPointer.withParent("jkl").toString() }
+    }
+
+    @Test fun `should combine pointers using parent element index`() {
+        val startingPointer = JSONPointer("/abc/def/ghi")
+        expect("/0/abc/def/ghi") { startingPointer.withParent(0).toString() }
+    }
+
+    @Test fun `should combine pointers using plus operator`() {
+        val startingPointer = JSONPointer("/abc/def/ghi")
+        expect("/abc/def/ghi/xyz") { (startingPointer + "xyz").toString() }
+        expect("/abc/def/ghi/3") { (startingPointer + 3).toString() }
+        expect("/abc/def/ghi/jkl/mno") { (startingPointer + JSONPointer("/jkl/mno")).toString() }
+        expect("/abc/def/ghi") { (startingPointer + JSONPointer.root).toString() }
+    }
+
     @Test fun `should give correct error message on bad reference`() {
         assertFailsWith<JSONPointerException> { JSONPointer("/wrong/0").find(document) }.let {
             expect("Can't resolve JSON Pointer, at /wrong") { it.message }
@@ -349,6 +379,16 @@ class JSONPointerTest {
         assertFailsWith<JSONPointerException> { JSONPointer.root.parent() }.let {
             expect("Can't get parent of root JSON Pointer") { it.message }
         }
+    }
+
+    @Test fun `should create JSON Pointer from a vararg list of strings`() {
+        val pointer = JSONPointer.of("abc", "0")
+        expect(JSONPointer("/abc/0")) { pointer }
+    }
+
+    @Test fun `should return root JSON Pointer for empty vararg list`() {
+        val pointer = JSONPointer.of()
+        assertSame(JSONPointer.root, pointer)
     }
 
     @Test fun `should create JSON Pointer from array`() {

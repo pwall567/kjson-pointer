@@ -2,6 +2,18 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [Unreleased]
+### Added
+- `build.yml`, `deploy.yml`: converted project to GitHub Actions
+### Changed
+- `JSONPointer`: added `withPointer()` and operator plus functions
+- `JSONPointer`: added overload of `child()` taking another `JSONPointer`
+- `JSONPointer`: added `JSONPointer.of()`
+- `JSONRef`: minor optimisation
+- `pom.xml`: updated Kotlin version to 1.9.24
+### Removed
+- `.travis.yml`
+
 ## [7.4] - 2024-02-14
 ### Changed
 - `pom.xml`: updated dependency versions

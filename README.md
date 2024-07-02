@@ -1,8 +1,8 @@
 # kjson-pointer
 
-[![Build Status](https://travis-ci.com/pwall567/kjson-pointer.svg?branch=main)](https://app.travis-ci.com/github/pwall567/kjson-pointer)
+[![Build Status](https://github.com/pwall567/kjson-pointer/actions/workflows/build.yml/badge.svg)](https://github.com/pwall567/kjson-pointer/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Kotlin](https://img.shields.io/static/v1?label=Kotlin&message=v1.8.22&color=7f52ff&logo=kotlin&logoColor=7f52ff)](https://github.com/JetBrains/kotlin/releases/tag/v1.8.22)
+[![Kotlin](https://img.shields.io/static/v1?label=Kotlin&message=v1.9.24&color=7f52ff&logo=kotlin&logoColor=7f52ff)](https://github.com/JetBrains/kotlin/releases/tag/v1.9.24)
 [![Maven Central](https://img.shields.io/maven-central/v/io.kjson/kjson-pointer?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.kjson%22%20AND%20a:%22kjson-pointer%22)
 
 Kotlin implementation of [JSON Pointer](https://tools.ietf.org/html/rfc6901).
@@ -21,28 +21,73 @@ version 4.0 of the library, these functions no longer output or expect the leadi
 
 ### `JSONPointer`
 
-To create a JSON Pointer:
+#### To Create a JSON Pointer
+
+To create a pointer from a JSON Pointer string (which may include encoding of "`/`" and "`~`" characters, as described
+in the [JSON Pointer Specification](https://tools.ietf.org/html/rfc6901)):
 ```kotlin
         val pointer = JSONPointer("/prop1/0")
 ```
 This creates a pointer to the 0th element of the "prop1" property (of whatever JSON value is addressed).
 
-To test whether such an element exists in the JSON object "obj":
+To create a pointer from a `vararg` list of pointer tokens (**not** encoded):
+```kotlin
+        val pointer = JSONPointer.of("prop1", "0")
+```
+This creates a pointer identical to the one above.
+
+To create a pointer from an array of pointer tokens (**not** encoded):
+```kotlin
+        val pointer = JSONPointer.from(arrayOf("prop1", "0"))
+```
+This also creates a pointer identical to the one above.
+
+To create a pointer from a `List` of pointer tokens (**not** encoded):
+```kotlin
+        val pointer = JSONPointer.from(listOf("prop1", "0"))
+```
+This again creates a pointer identical to the one above.
+
+To create a pointer to the root element of any JSON value:
+```kotlin
+        val pointer = JSONPointer.root
+```
+
+#### Using the Pointer
+
+To test whether an element referenced by the pointer exists in the JSON object `obj`:
 ```kotlin
         if (pointer existsIn obj) {
-            // whatever
+            doSomething(obj, pointer)
         }
 ```
+Alternatively:
+```kotlin
+        if (obj.contains(pointer)) {
+            doSomething(obj, pointer)
+        }
+```
+Either of these two constructs returns `false` if the `obj` is `null`.
 
 To retrieve the element:
 ```kotlin
         val value = pointer.find(obj)
 ```
+This will throw a `JSONPointerException` if the pointer is not valid for the given structure, so it is generally wise to
+test whether the element exist using one of the tests above.
 
-A pointer to the root element of any JSON value:
+An alternative is to use the indexing operation &ndash; this will return `null` if no element exists at the pointer
+location:
 ```kotlin
-        val pointer = JSONPointer.root
+        val value = obj[pointer]
 ```
+
+#### Navigating a JSON Structure
+
+All of these functions return a new `JSONPointer` (the original pointer is immutable, and may be used for further
+navigation operations).
+No checking is performed as to whether the resulting pointer is valid; that will depend on the JSON structure to which
+it is applied.
 
 To navigate to a child property:
 ```kotlin
@@ -53,19 +98,37 @@ To navigate to a child array element:
 ```kotlin
         val newPointer2 = newPointer.child(0)
 ```
-(the result of the last two operations is a pointer equivalent to the pointer in the first example).
+The result of the last two operations is a pointer equivalent to `JSONPointer("/prop1/0")`, the pointer in the pointer
+creation examples.
 
-To create a pointer from a list of pointer elements:
+It is also possible to combine two `JSONPointer`s.
+Suppose that a sub-structure of a JSON object is located at pointer `/abc/def`, and a function examining that
+sub-structure has located an element at pointer `/ghi/jkl` within it.
+The two pointers may be combined to create a pointer relative to the outer structure:
 ```kotlin
-        val pointerFromList = JSONPointer.from(listOf("prop1", "0"))
+        val outerPointer = substructurePointer.child(innerPointer)
 ```
-(again, the result will be a pointer equivalent to the pointer in the first example).
+
+Any of the three overloaded forms of the `child()` function (taking `String` or `Int` or `JSONPointer`) may be applied
+to any `JSONPointer`; whether the resulting pointer is valid or not will be determined only when it is applied to a
+specific structure.
+
+To navigate to the parent of the current pointer:
+```kotlin
+        val newPointer3 = newPointer2.parent()
+```
+When combined with the above operations, the result will be that `newPointer3` will be identical to `newPointer`.
+
+
+#### Locating an Element
 
 To create a pointer to a specified child value within a structure:
 ```kotlin
-        val childPointer = JSONPointer.root.locateChild(structure, target)
+        val childPointer = pointer.locateChild(structure, target)
 ```
 (This will perform a depth-first search of the JSON structure, so it should be used only when there is no alternative.)
+
+
 
 ### `JSONReference`
 
@@ -96,14 +159,14 @@ reference):
 To test whether the reference is valid, that is, the pointer refers to a valid location in the base object:
 ```kotlin
         if (ref.valid) {
-            // the reference can be taken to be valid
+            doSomething(ref)
         }
 ```
 
 To test whether the reference has a nominated child:
 ```kotlin
         if (ref.hasChild(name)) { // or index
-            // code to make use of ref.child(name)
+            doSomething(ref, name)
         }
 ```
 
@@ -116,7 +179,7 @@ To create a reference to a specified target child value:
 ### `JSONRef`
 
 `JSONRef` is an evolution of the concept first implemented in [`JSONReference`](#jsonreference).
-Like the earlier class, it combines a `JSONPointer` with the object into which the pointer navigates, but as a
+Like the earlier class, it combines a `JSONPointer` with the object into which the pointer navigates, but, as a
 parameterised class, it allows the target element to be accessed in a type-safe manner.
 
 The parameter class may be any of the `JSONValue` sealed interface types (or their nullable forms):
@@ -153,9 +216,10 @@ The result is the same; the only difference is that the syntax may be easier to 
 | `pointer` | `JSONPointer` | The `JSONPointer` to the referenced node |
 | `node`    | `J`           | The node (`J` a subtype of `JSONValue?`) |
 
+
 #### Navigation
 
-`JSONRef` is ideally suited to the task of navigation a JSON structure.
+`JSONRef` is ideally suited to the task of navigating a JSON structure.
 The `JSONRef` object itself is immutable, so to navigate to a nested part of a structure, the `child` operation creates
 a new `JSONRef` pointing to the appropriate location in the structure.
 
@@ -182,6 +246,7 @@ To navigate to the parent node:
 ```
 In this example, `parentRef` will now be identical to the original `ref`.
 
+
 #### Iteration
 
 To iterate over the address lines from the example above:
@@ -203,13 +268,14 @@ non-null `JSONValue`, to allow for the case where properties are of different ty
 When using a `JSONRef<JSONValue>`, the `isRef()` function tests whether the reference is to a node of a specific type:
 ```kotlin
     if (genericRef.isRef<JSONBoolean>()) {
-        // the node is Boolean
+        doSomething(genericRef)
     }
 ```
 and the `asRef()` function converts to a specified type, throwing an exception if the type is incorrect:
 ```kotlin
     val stringRef = genericRef.asRef<JSONString>()
 ```
+
 
 #### Optional Properties
 
@@ -239,6 +305,8 @@ More documentation to follow&hellip;
 
 The latest version of the library is 7.4, and it may be obtained from the Maven Central repository.
 
+
+
 ### Maven
 ```xml
     <dependency>
@@ -258,4 +326,4 @@ The latest version of the library is 7.4, and it may be obtained from the Maven 
 
 Peter Wall
 
-2024-02-18
+2024-07-02

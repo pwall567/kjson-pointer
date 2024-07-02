@@ -2,7 +2,7 @@
  * @(#) JSONPointer.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2021, 2022, 2023 Peter Wall
+ * Copyright (c) 2021, 2022, 2023, 2024 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -46,6 +46,10 @@ import net.pwall.util.ImmutableList
  * @author  Peter Wall
  */
 class JSONPointer internal constructor(internal val tokens: Array<String>) {
+
+    // Note: It would be good to make this a value class, but that is not currently possible,  A value class is not
+    // allowed to have equals() and hashCode() functions (the compiler uses the functions from the single property, and
+    // arrays do not provide "deep equals" capability).
 
     /**
      * Construct a `JSONPointer` from the supplied `String`, which must consist of zero or more tokens representing
@@ -126,6 +130,58 @@ class JSONPointer internal constructor(internal val tokens: Array<String>) {
         return child(index.toString())
     }
 
+    /**
+     * Return a new `JSONPointer` concatenating this pointer with a child pointer.
+     */
+    fun child(childPointer: JSONPointer): JSONPointer {
+        if (isRoot)
+            return childPointer
+        if (childPointer.isRoot)
+            return this
+        return JSONPointer(tokens + childPointer.tokens)
+    }
+
+    /**
+     * Return a new `JSONPointer` concatenating a parent element name with this pointer.
+     */
+    fun withParent(string: String): JSONPointer =
+            JSONPointer(Array(tokens.size + 1) { i -> if (i == 0) string else tokens[i - 1] })
+
+    /**
+     * Return a new `JSONPointer` concatenating a parent array index with this pointer.
+     */
+    fun withParent(index: Int): JSONPointer {
+        if (index < 0)
+            throw JSONPointerException("JSON Pointer index must not be negative", index)
+        return withParent(index.toString())
+    }
+
+    /**
+     * Return a new `JSONPointer` concatenating a parent pointer with this pointer.
+     */
+    fun withParent(parent: JSONPointer): JSONPointer {
+        if (isRoot)
+            return parent
+        if (parent.isRoot)
+            return this
+        return JSONPointer(parent.tokens + tokens)
+    }
+
+    /**
+     * Return a new `JSONPointer` concatenating this pointer with a child element name.
+     */
+    operator fun plus(string: String): JSONPointer = child(string)
+
+    /**
+     * Return a new `JSONPointer` concatenating this pointer with a child array index.
+     */
+    operator fun plus(index: Int): JSONPointer = child(index)
+
+    /**
+     * Return a new `JSONPointer` concatenating this pointer with a child pointer.
+     */
+    operator fun plus(childPointer: JSONPointer): JSONPointer = child(childPointer)
+
     /** The last token of the `JSONPointer` (the current property name or array index). */
     val current: String?
         get() = tokens.lastOrNull()
@@ -184,7 +240,15 @@ class JSONPointer internal constructor(internal val tokens: Array<String>) {
         /** The root `JSONPointer`. */
         val root = JSONPointer(emptyArray())
 
+        @Suppress("ConstPropertyName")
         private const val emptyString = ""
+
+        /**
+         * Create a `JSONPointer` from a `vararg` list of tokens.
+         */
+        @Suppress("unchecked_cast")
+        fun of(vararg tokens: String): JSONPointer =
+            if (tokens.isEmpty()) root else JSONPointer((tokens as Array<String>).copyOf())
 
         /**
          * Create a `JSONPointer` from an array of tokens.
