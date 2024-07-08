@@ -2,7 +2,7 @@
  * @(#) JSONReference.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2021, 2023 Peter Wall
+ * Copyright (c) 2021, 2023, 2024 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -40,12 +40,14 @@ import io.kjson.JSON.toJSON
  *
  * @author  Peter Wall
  */
-class JSONReference internal constructor(val base: JSONValue?, tokens: Array<String>, val valid: Boolean,
-        val value: JSONValue?) {
+class JSONReference internal constructor(
+    val base: JSONValue?,
+    val pointer: JSONPointer,
+    val valid: Boolean,
+    val value: JSONValue?,
+) {
 
-    constructor(base: JSONValue?) : this(base, emptyArray(), base != null, base)
-
-    val pointer = JSONPointer(tokens)
+    constructor(base: JSONValue?) : this(base, JSONPointer.root, base != null, base)
 
     fun hasChild(name: String): Boolean = valid && value is JSONObject && value.containsKey(name)
 
@@ -53,38 +55,35 @@ class JSONReference internal constructor(val base: JSONValue?, tokens: Array<Str
             ((value is JSONArray && index < value.size) || (value is JSONObject && value.containsKey(index.toString())))
 
     fun parent(): JSONReference {
-        val tokens = pointer.tokens
+        val tokens = pointer.tokensAsArray()
         val len = tokens.size
         if (len == 0)
-            JSONPointer.rootParentError()
-        val newArray = tokens.copyOfRange(0, len - 1)
-        return JSONReference(base, newArray, true, JSONPointer.find(newArray, base))
+            JSONPointer.throwRootParentError()
+        val parentPointer = pointer.parent()
+        return JSONReference(base, parentPointer, true, parentPointer.find(base))
     }
 
     fun child(name: String): JSONReference {
-        val newArray = pointer.tokens + name
         return if (valid && value is JSONObject && value.containsKey(name))
-            JSONReference(base, newArray, true, value[name])
+            JSONReference(base, pointer.child(name), true, value[name])
         else
-            JSONReference(base, newArray, false, null)
+            JSONReference(base, pointer.child(name), false, null)
     }
 
     fun child(index: Int): JSONReference {
-        if (index < 0)
-            throw JSONPointerException("JSON Pointer index must not be negative", "$this/$index")
-        val name = index.toString()
-        val newArray = pointer.tokens + name
+        val childPointer = pointer.child(index)
         if (valid) {
             if (value is JSONArray) {
                 if (index < value.size)
-                    return JSONReference(base, newArray, true, value[index])
+                    return JSONReference(base, childPointer, true, value[index])
             }
             else if (value is JSONObject) {
+                val name = index.toString()
                 if (value.containsKey(name))
-                    return JSONReference(base, newArray, true, value[name])
+                    return JSONReference(base, childPointer, true, value[name])
             }
         }
-        return JSONReference(base, newArray, false, null)
+        return JSONReference(base, childPointer, false, null)
     }
 
     fun locateChild(target: JSONValue?): JSONReference? {

@@ -42,15 +42,12 @@ import io.kjson.JSONValue
  */
 class JSONRef<out J : JSONValue?> internal constructor(
     val base: JSONValue?,
-    tokens: Array<String>,
+    val pointer: JSONPointer,
     private val nodes: Array<JSONValue?>,
     val node: J,
 ) {
 
-    constructor(base: J) : this(base, emptyArray(), emptyArray(), base)
-
-    /** The [JSONPointer] corresponding to this reference. */
-    val pointer = JSONPointer(tokens)
+    constructor(base: J) : this(base, JSONPointer.root, emptyArray(), base)
 
     /**
      * Get the parent reference of this reference.
@@ -65,18 +62,17 @@ class JSONRef<out J : JSONValue?> internal constructor(
      * Get the parent reference of this reference (using a supplied checking function to confirm the type).
      */
     fun <T : JSONStructure<*>> parent(checkType: (JSONValue?) -> T): JSONRef<T> {
-        val tokens = pointer.tokens
-        val len = tokens.size - 1
+        val len = pointer.depth - 1
         val parentNode = checkType(when {
             len > 0 -> nodes[len - 1]
             len == 0 -> base
-            else -> JSONPointer.rootParentError()
+            else -> JSONPointer.throwRootParentError()
         })
         return JSONRef(
             base = base,
-            tokens = tokens.copyOfRange(0, len),
-            nodes = nodes.copyOfRange(0, len),
-            node = parentNode
+            pointer = pointer.parent(),
+            nodes = if (len == 0) emptyArray() else nodes.copyOfRange(0, len),
+            node = parentNode,
         )
     }
 
@@ -94,7 +90,7 @@ class JSONRef<out J : JSONValue?> internal constructor(
      */
     fun <T : JSONValue?> createChildRef(token: String, targetNode: T): JSONRef<T> = JSONRef(
         base = base,
-        tokens = pointer.tokens + token,
+        pointer = pointer.child(token),
         nodes = nodes + targetNode,
         node = targetNode,
     )
@@ -181,29 +177,29 @@ class JSONRef<out J : JSONValue?> internal constructor(
          * Create an untyped reference using the given base JSON and pointer.
          */
         fun untyped(base: JSONValue?, pointer: JSONPointer): JSONRef<JSONValue?> {
-            val tokens = pointer.tokens
-            val len = tokens.size
+            val len = pointer.depth
             val nodes: Array<JSONValue?> = arrayOfNulls(len)
             var node: JSONValue? = base
-            for (i in tokens.indices) {
-                val token = tokens[i]
+            for (i in 0 until len) {
+                val token = pointer.getToken(i)
                 when (node) {
                     is JSONObject -> {
                         if (!node.containsKey(token))
-                            JSONPointer.pointerError("Node does not exist", tokens, i + 1)
-                        node = node[token] ?: JSONPointer.pointerError("Node is null", tokens, i + 1)
+                            throw JSONPointerException("Node does not exist", pointer.truncate(i + 1))
+                        node = node[token] ?: throw JSONPointerException("Node is null", pointer.truncate(i + 1))
                         nodes[i] = node
                     }
                     is JSONArray -> {
-                        if (!JSONPointer.checkNumber(token) || token.toInt() >= node.size)
-                            JSONPointer.pointerError("Node index incorrect", tokens, i + 1)
-                        node = node[token.toInt()] ?: JSONPointer.pointerError("Node is null", tokens, i + 1)
+                        if (!checkNumber(token) || token.toInt() >= node.size)
+                            throw JSONPointerException("Node index incorrect", pointer.truncate(i + 1))
+                        node = node[token.toInt()] ?:
+                                throw JSONPointerException("Node is null", pointer.truncate(i + 1))
                         nodes[i] = node
                     }
-                    else -> JSONPointer.pointerError("Not an object or array", tokens, i)
+                    else -> throw JSONPointerException("Not an object or array", pointer.truncate(i))
                 }
             }
-            return JSONRef(base, tokens, nodes, node)
+            return JSONRef(base, pointer, nodes, node)
         }
 
     }

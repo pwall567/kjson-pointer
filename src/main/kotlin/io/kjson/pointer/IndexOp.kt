@@ -48,7 +48,7 @@ import io.kjson.JSONValue
 /**
  * Get the entry within `this` [JSONValue] using the specified [JSONPointer].
  */
-operator fun JSONValue?.get(pointer: JSONPointer): JSONValue? = if (pointer existsIn this) pointer.find(this) else null
+operator fun JSONValue?.get(pointer: JSONPointer): JSONValue? = pointer.findOrNull(this)
 
 /**
  * Test whether the specified [JSONPointer] points to a valid entry in `this` [JSONValue].

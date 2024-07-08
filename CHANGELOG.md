@@ -2,16 +2,16 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [Unreleased]
+## [8.0] - 2024-07-09
 ### Added
 - `build.yml`, `deploy.yml`: converted project to GitHub Actions
+- `Find.kt`: `find` functions _etc._ from `JSONPointer` converted to extension functions
 ### Changed
-- `JSONPointer`: added `withPointer()` and operator plus functions
-- `JSONPointer`: added overload of `child()` taking another `JSONPointer`
-- `JSONPointer`: added `JSONPointer.of()`
-- `JSONRef`: minor optimisation
+- `JSONRef`, `JSONReference`: major changes to use `kjson-pointer-core`
+- `pom.xml`: include `kjson-pointer-core`
 - `pom.xml`: updated Kotlin version to 1.9.24
 ### Removed
+- `JSONPointer`: moved to `kjson-pointer-core`
 - `.travis.yml`
 
 ## [7.4] - 2024-02-14

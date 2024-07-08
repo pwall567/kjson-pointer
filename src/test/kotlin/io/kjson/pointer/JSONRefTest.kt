@@ -28,6 +28,7 @@ package io.kjson.pointer
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.test.expect
@@ -64,6 +65,9 @@ class JSONRefTest {
         val refObject = JSONRef(testObject)
         assertFailsWith<JSONPointerException> { refObject.parent<JSONObject>() }.let {
             expect("Can't get parent of root JSON Pointer") { it.message }
+            expect("Can't get parent of root JSON Pointer") { it.text }
+            assertSame(JSONPointer.root, it.pointer)
+            assertNull(it.cause)
         }
     }
 
@@ -171,6 +175,9 @@ class JSONRefTest {
         val json = JSON.parseObject("""{"a":{"b":null}}""")
         assertFailsWith<JSONPointerException> { JSONRef.of<JSONInt>(json, JSONPointer("/a/b/c")) }.let {
             expect("Node is null, at /a/b") { it.message }
+            expect("Node is null") { it.text }
+            expect(JSONPointer("/a/b")) { it.pointer }
+            assertNull(it.cause)
         }
     }
 

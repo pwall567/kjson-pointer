@@ -116,8 +116,8 @@ class ExtensionTest {
     @Test fun `should test whether any array item matches predicate`() {
         val json = JSON.parseArray("[1,2,3,4,5]")
         val ref = JSONRef(json)
-        assertTrue { ref.any<JSONInt> { value > 3 } }
-        assertFalse { ref.any<JSONInt> { value > 10 } }
+        assertTrue(ref.any<JSONInt> { value > 3 })
+        assertFalse(ref.any<JSONInt> { value > 10 })
     }
 
     @Test fun `should throw exception when 'any' test finds invalid value`() {
@@ -135,8 +135,8 @@ class ExtensionTest {
     @Test fun `should test whether all array items match predicate`() {
         val json = JSON.parseArray("[1,2,3,4,5]")
         val ref = JSONRef(json)
-        assertTrue { ref.all<JSONInt> { value < 10 } }
-        assertFalse { ref.all<JSONInt> { value < 5 } }
+        assertTrue(ref.all<JSONInt> { value < 10 })
+        assertFalse(ref.all<JSONInt> { value < 5 })
     }
 
     @Test fun `should throw exception when 'all' test finds invalid value`() {
@@ -162,7 +162,10 @@ class ExtensionTest {
         assertFailsWith<JSONPointerException> {
             ref.map<JSONInt, Int>("x") { it.value }
         }.let {
-            expect("Node does not exist, at /x") { it.message }
+            expect("Can't locate JSON property \"x\"") { it.message }
+            expect("Can't locate JSON property \"x\"") { it.text }
+            expect(JSONPointer.root) { it.pointer }
+            assertNull(it.cause)
         }
         val e: Int = ref.map("e") { prop: JSONInt -> prop.value }
         expect(5) { e }
@@ -172,7 +175,10 @@ class ExtensionTest {
         assertFailsWith<JSONPointerException> {
             ref.child<JSONInt>("x").value
         }.let {
-            expect("Node does not exist, at /x") { it.message }
+            expect("Can't locate JSON property \"x\"") { it.message }
+            expect("Can't locate JSON property \"x\"") { it.text }
+            expect(JSONPointer.root) { it.pointer }
+            assertNull(it.cause)
         }
     }
 

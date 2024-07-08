@@ -2,7 +2,7 @@
  * @(#) Extension.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2022, 2023 Peter Wall
+ * Copyright (c) 2022, 2023, 2024 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -40,10 +40,15 @@ import io.kjson.JSONPrimitive
 import io.kjson.JSON.typeError
 
 /**
+ * Create a [JSONReference] using this [JSONPointer] and the specified [JSONValue] base.
+ */
+infix fun JSONPointer.ref(base: JSONValue?) = if (existsIn(base)) JSONReference(base, this, true, find(base))
+        else JSONReference(base, this, false, null)
+
+/**
  * Create a [JSONRef] from `this` [JSONValue] and the specified [JSONPointer].
  */
-inline infix fun <reified T : JSONValue> JSONValue.ptr(pointer: JSONPointer): JSONRef<T> =
-        JSONRef.of(this, pointer)
+inline infix fun <reified T : JSONValue> JSONValue.ptr(pointer: JSONPointer): JSONRef<T> = JSONRef.of(this, pointer)
 
 /**
  * Conditionally execute if [JSONObject] referenced by `this` [JSONRef] contains a member with the specified key and the
@@ -51,7 +56,7 @@ inline infix fun <reified T : JSONValue> JSONValue.ptr(pointer: JSONPointer): JS
  *
  * **NOTE:** this function will not throw an exception if the property is present but is of the wrong type, and it may
  * be removed from future releases.  To achieve the same effect with strong type checking, use:
- * ```
+ * ```kotlin
  *     ref.optionalChild<JSONObject>("name")?.let { doSomething(it) }
  * ```
  */
@@ -100,7 +105,7 @@ inline fun <reified T : JSONValue?, R : Any> JSONRef<JSONObject>.map(name: Strin
  *
  * **NOTE:** this function will not throw an exception if the property is present but is of the wrong type, and it has
  * been deprecated.  To achieve the same effect with strong type checking, use:
- * ```
+ * ```kotlin
  *     ref.optionalChild<JSONObject>("name")?.let { doSomething(it) }
  * ```
  */
@@ -236,7 +241,7 @@ inline fun <reified T : JSONValue?> JSONRef<JSONArray>.hasChild(index: Int): Boo
  */
 fun JSONRef<JSONObject>.checkName(name: String) {
     if (!node.containsKey(name))
-        JSONPointer.pointerError("Node does not exist", pointer.child(name))
+        pointer.throwInvalidPropertyName(name)
 }
 
 /**
@@ -244,7 +249,7 @@ fun JSONRef<JSONObject>.checkName(name: String) {
  */
 fun JSONRef<JSONArray>.checkIndex(index: Int) {
     if (index !in node.indices)
-        JSONPointer.pointerError("Index not valid", pointer.child(index.toString()))
+        pointer.throwInvalidArrayIndex(index)
 }
 
 /**

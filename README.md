@@ -7,6 +7,22 @@
 
 Kotlin implementation of [JSON Pointer](https://tools.ietf.org/html/rfc6901).
 
+Note &ndash; **Breaking Change** &ndash; from version 8.0 of the library, the basic functions of the `JSONPointer` class
+(along with `JSONPointerException`) have been moved to a new library
+[`kjson-pointer-core`](https://github.com/pwall567/kjson-pointer-core), allowing the class to be used independently of
+any specific JSON implementation.
+
+That leaves this library with the responsibility of applying the functionality of the `JSONPointer` class to the JSON
+structures created by the [`kjson-core`](https://github.com/pwall567/kjson-core) library.
+The `find()` and `existsIn()` and all the other functions that apply a `JSONPointer` to a `JSONValue` structure are now
+implemented as extension functions on `JSONPointer`, leaving the `kjson-pointer-core` library free of dependencies that
+are needed only for these operations.
+For existing users of the library, the switch to the use of extension functions means that some functions will now need
+to be imported, where previously they were part of the `JSONPointer` class.
+
+The `JSONRef` and `JSONReference` classes both include references to `JSONValue` objects, so they remain part of this
+library.
+
 Note &ndash; **Breaking Change** &ndash; from version 5.0 of the library, the `tokens` array is no longer accessible as
 a `public` value.
 It was an oversight to allow it to be accessible previously since array members may be modified, and a `JSONPointer` is
@@ -17,43 +33,44 @@ The array of tokens may be obtained by the functions `tokensAsArray()` which ret
 Note &ndash; **Breaking Change** for users of the `toURIFragment()` and `fromURIFragment()` functions &ndash; from
 version 4.0 of the library, these functions no longer output or expect the leading `#` symbol.
 
+
+
 ## Quick Start
 
 ### `JSONPointer`
 
-#### To Create a JSON Pointer
+#### Core Functions
 
-To create a pointer from a JSON Pointer string (which may include encoding of "`/`" and "`~`" characters, as described
-in the [JSON Pointer Specification](https://tools.ietf.org/html/rfc6901)):
+The details on creating a `JSONPointer`, and then using that pointer to navigate to locations in a JSON structure
+relative to the original pointer, are now described in the
+[`kjson-pointer-core`](https://github.com/pwall567/kjson-pointer-core) library, but to summarise:
+
+To create a pointer from a JSON Pointer string (which may include encoding of &ldquo;`/`&rdquo; and &ldquo;`~`&rdquo;
+characters, as described in the [JSON Pointer Specification](https://tools.ietf.org/html/rfc6901)):
 ```kotlin
-        val pointer = JSONPointer("/prop1/0")
+    val pointer = JSONPointer("/prop1/0")
 ```
-This creates a pointer to the 0th element of the "prop1" property (of whatever JSON value is addressed).
+Alternatively, the companion object functions `JSONPonter.of()` and `JSONPointer.from()` will create a `JSONPointer`
+from a pointer string, a `vararg` array of tokens, or a `List` or `Array` of tokens.
 
-To create a pointer from a `vararg` list of pointer tokens (**not** encoded):
+To use a `JSONPointer` to create a new pointer referring to a child element:
 ```kotlin
-        val pointer = JSONPointer.of("prop1", "0")
+    val childPointer = pointer.child(childRef)
 ```
-This creates a pointer identical to the one above.
+(where `childRef` is a string to select a property from an object, a number to select an array item, or another
+`JSONPointer` to create a pointer to a more deeply nested element).
 
-To create a pointer from an array of pointer tokens (**not** encoded):
+To use a `JSONPointer` to create a new pointer referring to the parent element:
 ```kotlin
-        val pointer = JSONPointer.from(arrayOf("prop1", "0"))
-```
-This also creates a pointer identical to the one above.
-
-To create a pointer from a `List` of pointer tokens (**not** encoded):
-```kotlin
-        val pointer = JSONPointer.from(listOf("prop1", "0"))
-```
-This again creates a pointer identical to the one above.
-
-To create a pointer to the root element of any JSON value:
-```kotlin
-        val pointer = JSONPointer.root
+    val childPointer = pointer.parent()
 ```
 
-#### Using the Pointer
+Objects of the `JSONPointer` class are immutable, so the above functions all create a new instance.
+
+#### Dereferencing
+
+The functions to use a `JSONPointer` to locate elements within a JSON structure created by the `kjson-core` library are
+implemented as extension functions in this library.
 
 To test whether an element referenced by the pointer exists in the JSON object `obj`:
 ```kotlin
@@ -82,52 +99,11 @@ location:
         val value = obj[pointer]
 ```
 
-#### Navigating a JSON Structure
-
-All of these functions return a new `JSONPointer` (the original pointer is immutable, and may be used for further
-navigation operations).
-No checking is performed as to whether the resulting pointer is valid; that will depend on the JSON structure to which
-it is applied.
-
-To navigate to a child property:
-```kotlin
-        val newPointer = pointer.child("prop1")
-```
-
-To navigate to a child array element:
-```kotlin
-        val newPointer2 = newPointer.child(0)
-```
-The result of the last two operations is a pointer equivalent to `JSONPointer("/prop1/0")`, the pointer in the pointer
-creation examples.
-
-It is also possible to combine two `JSONPointer`s.
-Suppose that a sub-structure of a JSON object is located at pointer `/abc/def`, and a function examining that
-sub-structure has located an element at pointer `/ghi/jkl` within it.
-The two pointers may be combined to create a pointer relative to the outer structure:
-```kotlin
-        val outerPointer = substructurePointer.child(innerPointer)
-```
-
-Any of the three overloaded forms of the `child()` function (taking `String` or `Int` or `JSONPointer`) may be applied
-to any `JSONPointer`; whether the resulting pointer is valid or not will be determined only when it is applied to a
-specific structure.
-
-To navigate to the parent of the current pointer:
-```kotlin
-        val newPointer3 = newPointer2.parent()
-```
-When combined with the above operations, the result will be that `newPointer3` will be identical to `newPointer`.
-
-
-#### Locating an Element
-
 To create a pointer to a specified child value within a structure:
 ```kotlin
         val childPointer = pointer.locateChild(structure, target)
 ```
 (This will perform a depth-first search of the JSON structure, so it should be used only when there is no alternative.)
-
 
 
 ### `JSONReference`
@@ -175,6 +151,7 @@ To create a reference to a specified target child value:
         val childRef = baseRef.locateChild(target)
 ```
 (This will perform a depth-first search of the JSON structure, so it should be used only when there is no alternative.)
+
 
 ### `JSONRef`
 
@@ -299,31 +276,29 @@ When the optional property is a nested sub-structure, the `optionalChild()` func
 ```
 As with the other optional functions, if the property is present but of the wrong type, a detailed exception is thrown.
 
-More documentation to follow&hellip;
+
 
 ## Dependency Specification
 
-The latest version of the library is 7.4, and it may be obtained from the Maven Central repository.
-
-
+The latest version of the library is 8.0, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>7.4</version>
+      <version>8.0</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:7.4'
+    implementation 'io.kjson:kjson-pointer:8.0'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:7.4")
+    implementation("io.kjson:kjson-pointer:8.0")
 ```
 
 Peter Wall
 
-2024-07-02
+2024-07-09
