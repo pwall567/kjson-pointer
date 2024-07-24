@@ -70,6 +70,7 @@ fun JSONPointer.find(base: JSONValue?): JSONValue? {
     for (i in 0 until depth) {
         val token = getToken(i)
         result = when (result) {
+            null -> truncate(i).throwIntermediateNodeNull()
             is JSONObject -> {
                 if (!result.containsKey(token))
                     truncate(i).throwInvalidPropertyName(token)
@@ -77,13 +78,13 @@ fun JSONPointer.find(base: JSONValue?): JSONValue? {
             }
             is JSONArray -> {
                 if (token == "-")
-                    throw JSONPointerException("Can't dereference end-of-array JSON Pointer", truncate(i))
+                    truncate(i).throwCantDereferenceEndOfArrayPointer()
                 val index = checkIndex(token, i)
                 if (index < 0 || index >= result.size)
                     truncate(i).throwInvalidArrayIndex(index)
                 result[index]
             }
-            else -> throw JSONPointerException("Can't resolve JSON Pointer token \"$token\"", truncate(i))
+            else -> truncate(i).throwIntermediateNodeNotObjectOrArray()
         }
     }
     return result
@@ -147,6 +148,18 @@ internal fun JSONPointer.throwInvalidPropertyName(propertyName: String): Nothing
 
 internal fun JSONPointer.throwInvalidArrayIndex(index: Int): Nothing {
     throw JSONPointerException("Array index $index out of range in JSON Pointer", this)
+}
+
+internal fun JSONPointer.throwIntermediateNodeNull(): Nothing {
+    throw throw JSONPointerException("Intermediate node is null", this)
+}
+
+internal fun JSONPointer.throwIntermediateNodeNotObjectOrArray(): Nothing {
+    throw throw JSONPointerException("Intermediate node is not object or array", this)
+}
+
+internal fun JSONPointer.throwCantDereferenceEndOfArrayPointer(): Nothing {
+    throw throw JSONPointerException("Can't dereference end-of-array JSON Pointer", this)
 }
 
 internal fun checkNumber(token: String): Boolean {

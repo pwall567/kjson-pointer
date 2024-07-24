@@ -280,25 +280,25 @@ As with the other optional functions, if the property is present but of the wron
 
 ## Dependency Specification
 
-The latest version of the library is 8.0, and it may be obtained from the Maven Central repository.
+The latest version of the library is 8.1, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>8.0</version>
+      <version>8.1</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:8.0'
+    implementation 'io.kjson:kjson-pointer:8.1'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:8.0")
+    implementation("io.kjson:kjson-pointer:8.1")
 ```
 
 Peter Wall
 
-2024-07-09
+2024-07-25

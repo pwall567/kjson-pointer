@@ -183,20 +183,22 @@ class JSONRef<out J : JSONValue?> internal constructor(
             for (i in 0 until len) {
                 val token = pointer.getToken(i)
                 when (node) {
+                    null -> pointer.truncate(i).throwIntermediateNodeNull()
                     is JSONObject -> {
                         if (!node.containsKey(token))
-                            throw JSONPointerException("Node does not exist", pointer.truncate(i + 1))
-                        node = node[token] ?: throw JSONPointerException("Node is null", pointer.truncate(i + 1))
+                            pointer.truncate(i).throwInvalidPropertyName(token)
+                        node = node[token]
                         nodes[i] = node
                     }
                     is JSONArray -> {
+                        if (token == "-")
+                            pointer.truncate(i).throwCantDereferenceEndOfArrayPointer()
                         if (!checkNumber(token) || token.toInt() >= node.size)
-                            throw JSONPointerException("Node index incorrect", pointer.truncate(i + 1))
-                        node = node[token.toInt()] ?:
-                                throw JSONPointerException("Node is null", pointer.truncate(i + 1))
+                            pointer.truncate(i).throwInvalidArrayIndex(token.toInt())
+                        node = node[token.toInt()]
                         nodes[i] = node
                     }
-                    else -> throw JSONPointerException("Not an object or array", pointer.truncate(i))
+                    else -> pointer.truncate(i).throwIntermediateNodeNotObjectOrArray()
                 }
             }
             return JSONRef(base, pointer, nodes, node)

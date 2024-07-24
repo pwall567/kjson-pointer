@@ -43,6 +43,7 @@ import io.kjson.JSONString
 import io.kjson.JSONTypeException
 import io.kjson.JSONValue
 import io.kjson.pointer.test.SampleJSON.testArray
+import io.kjson.pointer.test.SampleJSON.testMixedArray
 import io.kjson.pointer.test.SampleJSON.testNestedObject
 import io.kjson.pointer.test.SampleJSON.testObject
 
@@ -250,6 +251,14 @@ class FindTest {
         assertTrue(obj is JSONArray)
         expect(JSONString("def")) { obj[1] }
         assertNull(JSONPointer("/nothing").findOrNull(testObject))
+    }
+
+    @Test fun `should throw exception when intermediate node is null on find`() {
+        assertFailsWith<JSONPointerException> { JSONPointer("/4/name").find(testMixedArray) }.let {
+            expect("Intermediate node is null, at /4") { it.message }
+            expect("Intermediate node is null") { it.text }
+            expect(JSONPointer("/4")) { it.pointer }
+        }
     }
 
 }

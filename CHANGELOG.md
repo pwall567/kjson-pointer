@@ -2,6 +2,11 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.1] - 2024-07-25
+### Changed
+- `JSONRef`: fixed bug in creating ref to null node
+- `JSONRef`, `Find.kt`: standardised error messages
+
 ## [8.0] - 2024-07-09
 ### Added
 - `build.yml`, `deploy.yml`: converted project to GitHub Actions
