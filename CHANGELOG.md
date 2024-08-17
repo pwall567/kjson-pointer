@@ -2,6 +2,10 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.2] - 2024-08-17
+### Changed
+- `pom.xml`: updated dependency version
+
 ## [8.1] - 2024-07-25
 ### Changed
 - `JSONRef`: fixed bug in creating ref to null node
