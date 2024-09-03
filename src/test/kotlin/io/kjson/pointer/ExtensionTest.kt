@@ -28,6 +28,7 @@ package io.kjson.pointer
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
@@ -279,6 +280,34 @@ class ExtensionTest {
         }
     }
 
+    @Test fun `should get optional child JSONString`() {
+        val json = JSON.parseObject("""{"aaa":"OK"}""")
+        val ref = JSONRef(json)
+        val childRef = ref.optionalChild<JSONString>("aaa")
+        assertNotNull(childRef)
+        expect("OK") { childRef.value }
+        assertNull(ref.optionalChild<JSONString>("bbb"))
+    }
+
+    @Test fun `should get optional child nullable JSONString`() {
+        val json = JSON.parseObject("""{"aaa":"OK","bbb":null,"ccc":123}""")
+        val ref = JSONRef(json)
+        val childRef = ref.optionalChild<JSONString?>("aaa")
+        assertNotNull(childRef)
+        expect("OK") { childRef.node?.value }
+        val nullChildRef = ref.optionalChild<JSONString?>("bbb")
+        assertNotNull(nullChildRef)
+        assertNull(nullChildRef.node)
+        assertFailsWith<JSONTypeException> { ref.optionalChild<JSONString?>("ccc") }.let {
+            expect("Child not correct type (JSONString?), was 123, at /ccc") { it.message }
+            expect("Child") { it.nodeName }
+            expect("JSONString?") { it.target }
+            expect(JSONInt(123)) { it.value }
+            expect(JSONPointer("/ccc")) { it.key }
+        }
+        assertNull(ref.optionalChild<JSONString?>("ddd"))
+    }
+
     @Test fun `should get optional child object`() {
         val json = JSON.parseObject("""{"aaa":{"bbb":1000},"xxx":999}""")
         val ref = JSONRef(json)
@@ -303,6 +332,30 @@ class ExtensionTest {
         expect(888) { childRef.node[0].asInt }
         assertNull(ref.optionalChild<JSONArray>("ccc"))
         assertFailsWith<JSONTypeException> { ref.optionalChild<JSONArray>("xxx") }.let {
+            expect("Child not correct type (JSONArray), was 999, at /xxx") { it.message }
+            expect("Child") { it.nodeName }
+            expect("JSONArray") { it.target }
+            expect(JSONInt(999)) { it.value }
+            expect(JSONPointer("/xxx")) { it.key }
+        }
+    }
+
+    @Test fun `should perform operation with optional child`() {
+        val json = JSON.parseObject("""{"aaa":[888],"xxx":999}""")
+        val ref = JSONRef(json)
+        ref.withOptionalChild<JSONArray>("aaa") {
+            assertIs<JSONRef<JSONArray>>(this)
+            expect(it) { node }
+            expect(888) { it[0].asInt }
+        }
+        ref.withOptionalChild<JSONArray>("bbb") {
+            fail("Should not get here")
+        }
+        assertFailsWith<JSONTypeException> {
+            ref.withOptionalChild<JSONArray>("xxx") {
+                fail("Definitely should not get here")
+            }
+        }.let {
             expect("Child not correct type (JSONArray), was 999, at /xxx") { it.message }
             expect("Child") { it.nodeName }
             expect("JSONArray") { it.target }

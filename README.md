@@ -276,29 +276,35 @@ When the optional property is a nested sub-structure, the `optionalChild()` func
 ```
 As with the other optional functions, if the property is present but of the wrong type, a detailed exception is thrown.
 
-
+And to execute a block of code conditionally, depending on the presence of an optional child:
+```kotlin
+    ref.withOptionalChild<JSONString>("name") {
+        // within this code, "this" is a JSONRef<JSONString>, and "it" is the JSONString
+    }
+```
+And again, if the property is present but of the wrong type, a detailed exception is thrown.
 
 ## Dependency Specification
 
-The latest version of the library is 8.2, and it may be obtained from the Maven Central repository.
+The latest version of the library is 8.3, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>8.2</version>
+      <version>8.3</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:8.2'
+    implementation 'io.kjson:kjson-pointer:8.3'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:8.2")
+    implementation("io.kjson:kjson-pointer:8.3")
 ```
 
 Peter Wall
 
-2024-08-17
+2024-09-04

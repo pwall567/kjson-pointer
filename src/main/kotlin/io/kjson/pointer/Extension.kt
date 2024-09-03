@@ -174,19 +174,29 @@ fun JSONRef<JSONObject>.optionalDecimal(name: String): BigDecimal? = node[name]?
  * Get a child property [JSONRef] from a [JSONObject] using `this` [JSONRef] and the specified key, or `null` if the
  * property is not present (throws an exception if the property is present but is the wrong type).
  */
-inline fun <reified T : JSONValue?> JSONRef<JSONObject>.optionalChild(name: String): JSONRef<T>? = node[name]?.let {
-    createTypedChildRef(name, it)
+inline fun <reified T : JSONValue?> JSONRef<JSONObject>.optionalChild(name: String): JSONRef<T>? =
+    if (node.containsKey(name)) createTypedChildRef<T>(name, node[name]) else null
+
+/**
+ * Execute the supplied lambda if the nominated child property of `this` [JSONRef] exists.  Within the lambda, `this` is
+ * a [JSONRef] pointing to the child, and `it` is the child itself.
+ */
+inline fun <reified T : JSONValue?> JSONRef<JSONObject>.withOptionalChild(name: String, block: JSONRef<T>.(T) -> Unit) {
+    if (node.containsKey(name))
+        createTypedChildRef<T>(name, node[name]).let { it.block(it.node) }
 }
 
 /**
- * Iterate over the members of the [JSONObject] referenced by `this` [JSONRef].
+ * Iterate over the members of the [JSONObject] referenced by `this` [JSONRef].  Within the lambda, `this` is a
+ * [JSONRef] pointing to the value, and `it` is the key.
  */
 inline fun <reified T : JSONValue?> JSONRef<JSONObject>.forEachKey(block: JSONRef<T>.(String) -> Unit) {
     node.entries.forEach { createTypedChildRef<T>(it.key, it.value).block(it.key) }
 }
 
 /**
- * Iterate over the members of the [JSONArray] referenced by `this` [JSONRef].
+ * Iterate over the members of the [JSONArray] referenced by `this` [JSONRef].  Within the lambda, `this` is a [JSONRef]
+ * pointing to the array item, and `it` is the index.
  */
 inline fun <reified T : JSONValue?> JSONRef<JSONArray>.forEach(block: JSONRef<T>.(Int) -> Unit) {
     node.indices.forEach { createTypedChildRef<T>(it.toString(), node[it]).block(it) }

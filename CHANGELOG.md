@@ -2,6 +2,10 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.3] - 2024-09-04
+### Changed
+- `Extension.kt`: bug fix in `optionalChild()`, added `withOptionalChild()`
+
 ## [8.2] - 2024-08-17
 ### Changed
 - `pom.xml`: updated dependency version
