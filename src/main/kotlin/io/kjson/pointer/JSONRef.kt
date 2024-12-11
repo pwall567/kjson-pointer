@@ -41,6 +41,10 @@ import io.kjson.JSONValue
  * @author  Peter Wall
  */
 class JSONRef<out J : JSONValue?> internal constructor(
+    // TODO consider adding a String nodeType, to be used in typeError messages (default "Node")
+    //     Would normally be inherited from parent, but child() function could optionally override;
+    //     .withType() function could return a new JSONRef with the type modified
+    //     .invalid() could throw an error including the type in the message
     val base: JSONValue?,
     val pointer: JSONPointer,
     private val nodes: Array<JSONValue?>,
@@ -61,7 +65,8 @@ class JSONRef<out J : JSONValue?> internal constructor(
     /**
      * Get the parent reference of this reference (using a supplied checking function to confirm the type).
      */
-    fun <T : JSONStructure<*>> parent(checkType: (JSONValue?) -> T): JSONRef<T> {
+    @PublishedApi
+    internal fun <T : JSONStructure<*>> parent(checkType: (JSONValue?) -> T): JSONRef<T> {
         val len = pointer.depth - 1
         val parentNode = checkType(when {
             len > 0 -> nodes[len - 1]
@@ -88,7 +93,8 @@ class JSONRef<out J : JSONValue?> internal constructor(
     /**
      * Create a child reference.
      */
-    fun <T : JSONValue?> createChildRef(token: String, targetNode: T): JSONRef<T> = JSONRef(
+    @PublishedApi
+    internal fun <T : JSONValue?> createChildRef(token: String, targetNode: T): JSONRef<T> = JSONRef(
         base = base,
         pointer = pointer.child(token),
         nodes = nodes + targetNode,
@@ -143,10 +149,10 @@ class JSONRef<out J : JSONValue?> internal constructor(
     companion object {
 
         /**
-         * Get the class name of the reference class for error messages (this function is public only because it is
-         * required by public inline functions).
+         * Get the class name of the reference class for error messages.
          */
-        fun KType.refClassName(): String  {
+        @PublishedApi
+        internal fun KType.refClassName(): String  {
             val name = (classifier as KClass<*>).simpleName ?: "Unknown"
             return if (isMarkedNullable) "$name?" else name
         }

@@ -26,14 +26,13 @@
 package io.kjson.pointer
 
 import kotlin.test.Test
-import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
-import kotlin.test.assertNull
-import kotlin.test.assertSame
-import kotlin.test.assertTrue
-import kotlin.test.expect
 
 import java.io.File
+
+import io.kstuff.test.shouldBe
+import io.kstuff.test.shouldBeSameInstance
+import io.kstuff.test.shouldBeType
+import io.kstuff.test.shouldThrow
 
 import io.kjson.JSON
 import io.kjson.JSONArray
@@ -55,26 +54,26 @@ class FindTest {
     private val array1 = JSONArray.of(string1, string2)
 
     @Test fun `should give results shown in example in specification`() {
-        assertSame(document, JSONPointer("").find(document))
-        expect(array1) { JSONPointer("/foo").find(document) }
-        expect(string1) { JSONPointer("/foo/0").find(document) }
-        expect(JSONInt.ZERO) { JSONPointer("/").find(document) }
-        expect(JSONInt(1)) { JSONPointer("/a~1b").find(document) }
-        expect(JSONInt(2)) { JSONPointer("/c%d").find(document) }
-        expect(JSONInt(3)) { JSONPointer("/e^f").find(document) }
-        expect(JSONInt(4)) { JSONPointer("/g|h").find(document) }
-        expect(JSONInt(5)) { JSONPointer("/i\\j").find(document) }
-        expect(JSONInt(6)) { JSONPointer("/k\"l").find(document) }
-        expect(JSONInt(7)) { JSONPointer("/ ").find(document) }
-        expect(JSONInt(8)) { JSONPointer("/m~0n").find(document) }
+        JSONPointer("").find(document) shouldBeSameInstance document
+        JSONPointer("/foo").find(document) shouldBe array1
+        JSONPointer("/foo/0").find(document) shouldBe string1
+        JSONPointer("/").find(document) shouldBe JSONInt.ZERO
+        JSONPointer("/a~1b").find(document) shouldBe JSONInt(1)
+        JSONPointer("/c%d").find(document) shouldBe JSONInt(2)
+        JSONPointer("/e^f").find(document) shouldBe JSONInt(3)
+        JSONPointer("/g|h").find(document) shouldBe JSONInt(4)
+        JSONPointer("/i\\j").find(document) shouldBe JSONInt(5)
+        JSONPointer("/k\"l").find(document) shouldBe JSONInt(6)
+        JSONPointer("/ ").find(document) shouldBe JSONInt(7)
+        JSONPointer("/m~0n").find(document) shouldBe JSONInt(8)
     }
 
     @Test fun `should test whether pointer exists or not`() {
-        assertTrue(JSONPointer("/foo") existsIn  document)
-        assertTrue(JSONPointer("/foo/0") existsIn  document)
-        assertTrue(JSONPointer("/foo/1") existsIn  document)
-        assertFalse(JSONPointer("/foo/2") existsIn  document)
-        assertFalse(JSONPointer("/fool") existsIn  document)
+        JSONPointer("/foo") existsIn  document shouldBe true
+        JSONPointer("/foo/0") existsIn  document shouldBe true
+        JSONPointer("/foo/1") existsIn  document shouldBe true
+        JSONPointer("/foo/2") existsIn  document shouldBe false
+        JSONPointer("/fool") existsIn  document shouldBe false
     }
 
     @Test fun `should handle null object properties correctly`() {
@@ -82,10 +81,10 @@ class FindTest {
             add("nonNullValue", JSONString("OK"))
             add("nullValue", null)
         }.build()
-        expect(JSONString("OK")) { JSONPointer("/nonNullValue").find(obj) }
-        assertTrue { JSONPointer("/nonNullValue") existsIn obj }
-        assertNull(JSONPointer("/nullValue").find(obj))
-        assertTrue { JSONPointer("/nullValue") existsIn obj }
+        JSONPointer("/nonNullValue").find(obj) shouldBe JSONString("OK")
+        JSONPointer("/nonNullValue") existsIn obj shouldBe true
+        JSONPointer("/nullValue").find(obj) shouldBe null
+        JSONPointer("/nullValue") existsIn obj shouldBe true
     }
 
     @Test fun `should handle null array items correctly`() {
@@ -93,117 +92,131 @@ class FindTest {
             add(JSONString("OK"))
             add(null)
         }.build()
-        expect(JSONString("OK")) { JSONPointer("/0").find(array) }
-        assertTrue(JSONPointer("/0") existsIn array)
-        assertNull(JSONPointer("/1").find(array))
-        assertTrue(JSONPointer("/1") existsIn array)
+        JSONPointer("/0").find(array) shouldBe JSONString("OK")
+        JSONPointer("/0") existsIn array shouldBe true
+        JSONPointer("/1").find(array) shouldBe null
+        JSONPointer("/1") existsIn array shouldBe true
     }
 
     @Test fun `should give correct error message on bad reference`() {
-        assertFailsWith<JSONPointerException> { JSONPointer("/wrong/0").find(document) }.let {
-            expect("Can't locate JSON property \"wrong\"") { it.message }
-            expect("Can't locate JSON property \"wrong\"") { it.text }
-            assertSame(JSONPointer.root, it.pointer)
-            assertNull(it.cause)
+        shouldThrow<JSONPointerException>("Can't locate JSON property \"wrong\"") {
+            JSONPointer("/wrong/0").find(document)
+        }.let {
+            it.text shouldBe "Can't locate JSON property \"wrong\""
+            it.pointer shouldBeSameInstance JSONPointer.root
+            it.cause shouldBe null
         }
         val innerDocument = JSONObject.build {
             add("data", document)
         }
-        assertFailsWith<JSONPointerException> { JSONPointer("/data/wrong/0").find(innerDocument) }.let {
-            expect("Can't locate JSON property \"wrong\", at /data") { it.message }
-            expect("Can't locate JSON property \"wrong\"") { it.text }
-            expect(JSONPointer("/data")) { it.pointer }
-            assertNull(it.cause)
+        shouldThrow<JSONPointerException>("Can't locate JSON property \"wrong\", at /data") {
+            JSONPointer("/data/wrong/0").find(innerDocument)
+        }.let {
+            it.text shouldBe "Can't locate JSON property \"wrong\""
+            it.pointer shouldBe JSONPointer("/data")
+            it.cause shouldBe null
         }
     }
 
     @Test fun `should navigate numeric index`() {
-        expect(JSONString("A")) { JSONPointer("/0").find(testArray) }
-        expect(JSONString("B")) { JSONPointer("/1").find(testArray) }
-        expect(JSONString("K")) { JSONPointer("/10").find(testArray) }
-        expect(JSONString("P")) { JSONPointer("/15").find(testArray) }
+        JSONPointer("/0").find(testArray) shouldBe JSONString("A")
+        JSONPointer("/1").find(testArray) shouldBe JSONString("B")
+        JSONPointer("/10").find(testArray) shouldBe JSONString("K")
+        JSONPointer("/15").find(testArray) shouldBe JSONString("P")
     }
 
     @Test fun `should reject invalid numeric index`() {
-        assertFailsWith<JSONPointerException> { JSONPointer("/01").find(testArray) }.let {
-            expect("Illegal array index \"01\" in JSON Pointer") { it.message }
-            expect("Illegal array index \"01\" in JSON Pointer") { it.text }
-            assertSame(JSONPointer.root, it.pointer)
-            assertNull(it.cause)
+        shouldThrow<JSONPointerException>("Illegal array index \"01\" in JSON Pointer") {
+            JSONPointer("/01").find(testArray)
+        }.let {
+            it.text shouldBe "Illegal array index \"01\" in JSON Pointer"
+            it.pointer shouldBeSameInstance JSONPointer.root
+            it.cause shouldBe null
         }
-        assertFailsWith<JSONPointerException> { JSONPointer("/").find(testArray) }.let {
-            expect("Illegal array index \"\" in JSON Pointer") { it.message }
-            expect("Illegal array index \"\" in JSON Pointer") { it.text }
-            assertSame(JSONPointer.root, it.pointer)
-            assertNull(it.cause)
+        shouldThrow<JSONPointerException>("Illegal array index \"\" in JSON Pointer") {
+            JSONPointer("/").find(testArray)
+        }.let {
+            it.text shouldBe "Illegal array index \"\" in JSON Pointer"
+            it.pointer shouldBeSameInstance JSONPointer.root
+            it.cause shouldBe null
         }
-        assertFailsWith<JSONPointerException> { JSONPointer("/A").find(testArray) }.let {
-            expect("Illegal array index \"A\" in JSON Pointer") { it.message }
-            expect("Illegal array index \"A\" in JSON Pointer") { it.text }
-            assertSame(JSONPointer.root, it.pointer)
-            assertNull(it.cause)
+        shouldThrow<JSONPointerException>("Illegal array index \"A\" in JSON Pointer") {
+            JSONPointer("/A").find(testArray)
+        }.let {
+            it.text shouldBe "Illegal array index \"A\" in JSON Pointer"
+            it.pointer shouldBeSameInstance JSONPointer.root
+            it.cause shouldBe null
         }
-        assertFailsWith<JSONPointerException> { JSONPointer("/999999999").find(testArray) }.let {
-            expect("Illegal array index \"999999999\" in JSON Pointer") { it.message }
-            expect("Illegal array index \"999999999\" in JSON Pointer") { it.text }
-            assertSame(JSONPointer.root, it.pointer)
-            assertNull(it.cause)
+        shouldThrow<JSONPointerException>("Illegal array index \"999999999\" in JSON Pointer") {
+            JSONPointer("/999999999").find(testArray)
+        }.let {
+            it.text shouldBe "Illegal array index \"999999999\" in JSON Pointer"
+            it.pointer shouldBeSameInstance JSONPointer.root
+            it.cause shouldBe null
         }
-        assertFailsWith<JSONPointerException> { JSONPointer("/-1").find(testArray) }.let {
-            expect("Illegal array index \"-1\" in JSON Pointer") { it.message }
-            expect("Illegal array index \"-1\" in JSON Pointer") { it.text }
-            assertSame(JSONPointer.root, it.pointer)
-            assertNull(it.cause)
+        shouldThrow<JSONPointerException>("Illegal array index \"-1\" in JSON Pointer") {
+            JSONPointer("/-1").find(testArray)
+        }.let {
+            it.text shouldBe "Illegal array index \"-1\" in JSON Pointer"
+            it.pointer shouldBeSameInstance JSONPointer.root
+            it.cause shouldBe null
         }
-        assertFailsWith<JSONPointerException> { JSONPointer("/99").find(testArray) }.let {
-            expect("Array index 99 out of range in JSON Pointer") { it.message }
-            expect("Array index 99 out of range in JSON Pointer") { it.text }
-            assertSame(JSONPointer.root, it.pointer)
-            assertNull(it.cause)
+        shouldThrow<JSONPointerException>("Array index 99 out of range in JSON Pointer") {
+            JSONPointer("/99").find(testArray)
+        }.let {
+            it.text shouldBe "Array index 99 out of range in JSON Pointer"
+            it.pointer shouldBeSameInstance JSONPointer.root
+            it.cause shouldBe null
         }
         val innerArray = JSONObject.build {
             add("data", testArray)
         }
-        assertFailsWith<JSONPointerException> { JSONPointer("/data/01").find(innerArray) }.let {
-            expect("Illegal array index \"01\" in JSON Pointer, at /data") { it.message }
-            expect("Illegal array index \"01\" in JSON Pointer") { it.text }
-            expect(JSONPointer("/data")) { it.pointer }
-            assertNull(it.cause)
+        shouldThrow<JSONPointerException>("Illegal array index \"01\" in JSON Pointer, at /data") {
+            JSONPointer("/data/01").find(innerArray)
+        }.let {
+            it.text shouldBe "Illegal array index \"01\" in JSON Pointer"
+            it.pointer shouldBe JSONPointer("/data")
+            it.cause shouldBe null
         }
-        assertFailsWith<JSONPointerException> { JSONPointer("/data/").find(innerArray) }.let {
-            expect("Illegal array index \"\" in JSON Pointer, at /data") { it.message }
-            expect("Illegal array index \"\" in JSON Pointer") { it.text }
-            expect(JSONPointer("/data")) { it.pointer }
-            assertNull(it.cause)
+        shouldThrow<JSONPointerException>("Illegal array index \"\" in JSON Pointer, at /data") {
+            JSONPointer("/data/").find(innerArray)
+        }.let {
+            it.text shouldBe "Illegal array index \"\" in JSON Pointer"
+            it.pointer shouldBe JSONPointer("/data")
+            it.cause shouldBe null
         }
-        assertFailsWith<JSONPointerException> { JSONPointer("/data/A").find(innerArray) }.let {
-            expect("Illegal array index \"A\" in JSON Pointer, at /data") { it.message }
-            expect("Illegal array index \"A\" in JSON Pointer") { it.text }
-            expect(JSONPointer("/data")) { it.pointer }
-            assertNull(it.cause)
+        shouldThrow<JSONPointerException>("Illegal array index \"A\" in JSON Pointer, at /data") {
+            JSONPointer("/data/A").find(innerArray)
+        }.let {
+            it.text shouldBe "Illegal array index \"A\" in JSON Pointer"
+            it.pointer shouldBe JSONPointer("/data")
+            it.cause shouldBe null
         }
-        assertFailsWith<JSONPointerException> { JSONPointer("/data/999999999").find(innerArray) }.let {
-            expect("Illegal array index \"999999999\" in JSON Pointer, at /data") { it.message }
-            expect("Illegal array index \"999999999\" in JSON Pointer") { it.text }
-            expect(JSONPointer("/data")) { it.pointer }
-            assertNull(it.cause)
+        shouldThrow<JSONPointerException>("Illegal array index \"999999999\" in JSON Pointer, at /data") {
+            JSONPointer("/data/999999999").find(innerArray)
+        }.let {
+            it.text shouldBe "Illegal array index \"999999999\" in JSON Pointer"
+            it.pointer shouldBe JSONPointer("/data")
+            it.cause shouldBe null
         }
-        assertFailsWith<JSONPointerException> { JSONPointer("/data/-1").find(innerArray) }.let {
-            expect("Illegal array index \"-1\" in JSON Pointer, at /data") { it.message }
-            expect("Illegal array index \"-1\" in JSON Pointer") { it.text }
-            expect(JSONPointer("/data")) { it.pointer }
-            assertNull(it.cause)
+        shouldThrow<JSONPointerException>("Illegal array index \"-1\" in JSON Pointer, at /data") {
+            JSONPointer("/data/-1").find(innerArray)
+        }.let {
+            it.text shouldBe "Illegal array index \"-1\" in JSON Pointer"
+            it.pointer shouldBe JSONPointer("/data")
+            it.cause shouldBe null
         }
-        assertFailsWith<JSONPointerException> { JSONPointer("/data/99").find(innerArray) }.let {
-            expect("Array index 99 out of range in JSON Pointer, at /data") { it.message }
-            expect("Array index 99 out of range in JSON Pointer") { it.text }
-            expect(JSONPointer("/data")) { it.pointer }
-            assertNull(it.cause)
+        shouldThrow<JSONPointerException>("Array index 99 out of range in JSON Pointer, at /data") {
+            JSONPointer("/data/99").find(innerArray)
+        }.let {
+            it.text shouldBe "Array index 99 out of range in JSON Pointer"
+            it.pointer shouldBe JSONPointer("/data")
+            it.cause shouldBe null
         }
     }
 
     @Test fun `should return false for exists with null base`() {
-        assertFalse(JSONPointer.root existsIn null)
+        JSONPointer.root existsIn null shouldBe false
     }
 
     @Test fun `should locate child in nested object`() {
@@ -218,46 +231,47 @@ class FindTest {
         val obj1 = JSONObject.Builder {
             add("aaa", obj2)
         }.build()
-        expect(JSONPointer("/aaa")) { JSONPointer.root.locateChild(obj1, obj2) }
-        expect(JSONPointer("/aaa/bbb")) { JSONPointer.root.locateChild(obj1, str1) }
-        expect(JSONPointer("/bbb")) { JSONPointer.root.locateChild(obj2, str1) }
-        expect(JSONPointer("/aaa/ccc/1")) { JSONPointer.root.locateChild(obj1, int2) }
+        JSONPointer.root.locateChild(obj1, obj2) shouldBe JSONPointer("/aaa")
+        JSONPointer.root.locateChild(obj1, str1) shouldBe JSONPointer("/aaa/bbb")
+        JSONPointer.root.locateChild(obj2, str1) shouldBe JSONPointer("/bbb")
+        JSONPointer.root.locateChild(obj1, int2) shouldBe JSONPointer("/aaa/ccc/1")
     }
 
     @Test fun `should find object using findObject`() {
         val obj = JSONPointer("/field2").findObject(testNestedObject)
-        expect(JSONInt(99)) { obj["aaa"] }
+        obj["aaa"] shouldBe JSONInt(99)
     }
 
     @Test fun `should throw exception when findObject target is not an object`() {
-        assertFailsWith<JSONTypeException> { JSONPointer("/field1").findObject(testNestedObject) }.let {
-            expect("Node not correct type (JSONObject), was 123, at /field1") { it.message }
+        shouldThrow<JSONTypeException>("Node not correct type (JSONObject), was 123, at /field1") {
+            JSONPointer("/field1").findObject(testNestedObject)
         }
     }
 
     @Test fun `should find array using findArray`() {
         val obj = JSONPointer("/field2").findArray(testObject)
-        expect(JSONString("def")) { obj[1] }
+        obj[1] shouldBe JSONString("def")
     }
 
     @Test fun `should throw exception when findArray target is not an array`() {
-        assertFailsWith<JSONTypeException> { JSONPointer("/field1").findArray(testObject) }.let {
-            expect("Node not correct type (JSONArray), was 123, at /field1") { it.message }
+        shouldThrow<JSONTypeException>("Node not correct type (JSONArray), was 123, at /field1") {
+            JSONPointer("/field1").findArray(testObject)
         }
     }
 
     @Test fun `should find object using findOrNull`() {
         val obj = JSONPointer("/field2").findOrNull(testObject)
-        assertTrue(obj is JSONArray)
-        expect(JSONString("def")) { obj[1] }
-        assertNull(JSONPointer("/nothing").findOrNull(testObject))
+        obj.shouldBeType<JSONArray>()
+        obj[1] shouldBe JSONString("def")
+        JSONPointer("/nothing").findOrNull(testObject) shouldBe null
     }
 
     @Test fun `should throw exception when intermediate node is null on find`() {
-        assertFailsWith<JSONPointerException> { JSONPointer("/4/name").find(testMixedArray) }.let {
-            expect("Intermediate node is null, at /4") { it.message }
-            expect("Intermediate node is null") { it.text }
-            expect(JSONPointer("/4")) { it.pointer }
+        shouldThrow<JSONPointerException>("Intermediate node is null, at /4") {
+            JSONPointer("/4/name").find(testMixedArray)
+        }.let {
+            it.text shouldBe "Intermediate node is null"
+            it.pointer shouldBe JSONPointer("/4")
         }
     }
 

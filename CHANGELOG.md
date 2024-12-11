@@ -2,6 +2,11 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.4] - 2024-12-12
+### Changed
+- `JSONRef`: make use of `@PublishedApi` annotation
+- tests : switched to `should-test` library
+
 ## [8.3] - 2024-09-04
 ### Changed
 - `Extension.kt`: bug fix in `optionalChild()`, added `withOptionalChild()`
