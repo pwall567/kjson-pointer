@@ -65,8 +65,7 @@ class JSONRef<out J : JSONValue?> internal constructor(
     /**
      * Get the parent reference of this reference (using a supplied checking function to confirm the type).
      */
-    @PublishedApi
-    internal fun <T : JSONStructure<*>> parent(checkType: (JSONValue?) -> T): JSONRef<T> {
+    fun <T : JSONStructure<*>> parent(checkType: (JSONValue?) -> T): JSONRef<T> {
         val len = pointer.depth - 1
         val parentNode = checkType(when {
             len > 0 -> nodes[len - 1]
@@ -93,8 +92,7 @@ class JSONRef<out J : JSONValue?> internal constructor(
     /**
      * Create a child reference.
      */
-    @PublishedApi
-    internal fun <T : JSONValue?> createChildRef(token: String, targetNode: T): JSONRef<T> = JSONRef(
+    fun <T : JSONValue?> createChildRef(token: String, targetNode: T): JSONRef<T> = JSONRef(
         base = base,
         pointer = pointer.child(token),
         nodes = nodes + targetNode,
