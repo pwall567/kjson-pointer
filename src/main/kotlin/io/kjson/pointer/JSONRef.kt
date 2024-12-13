@@ -151,8 +151,7 @@ class JSONRef<out J : JSONValue?> internal constructor(
         /**
          * Get the class name of the reference class for error messages.
          */
-        @PublishedApi
-        internal fun KType.refClassName(): String  {
+        fun KType.refClassName(): String  {
             val name = (classifier as KClass<*>).simpleName ?: "Unknown"
             return if (isMarkedNullable) "$name?" else name
         }

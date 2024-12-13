@@ -2,6 +2,10 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.4] - 2024-12-13
+### Changed
+- `JSONRef`: make `refClassName()` public (made internal earlier by mistake)
+
 ## [8.4] - 2024-12-12
 ### Changed
 - `JSONRef`: make use of `@PublishedApi` annotation
