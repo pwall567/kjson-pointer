@@ -2,6 +2,10 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.7] - 2025-02-01
+### Changed
+- `pom.xml`: updated Kotlin version to 2.0.21, updated dependencies
+
 ## [8.6] - 2024-12-13
 ### Changed
 - `JSONRef`: make `parent()` and `createChildRef()` public

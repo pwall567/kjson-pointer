@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/pwall567/kjson-pointer/actions/workflows/build.yml/badge.svg)](https://github.com/pwall567/kjson-pointer/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Kotlin](https://img.shields.io/static/v1?label=Kotlin&message=v1.9.24&color=7f52ff&logo=kotlin&logoColor=7f52ff)](https://github.com/JetBrains/kotlin/releases/tag/v1.9.24)
+[![Kotlin](https://img.shields.io/static/v1?label=Kotlin&message=v2.0.21&color=7f52ff&logo=kotlin&logoColor=7f52ff)](https://github.com/JetBrains/kotlin/releases/tag/v2.0.21)
 [![Maven Central](https://img.shields.io/maven-central/v/io.kjson/kjson-pointer?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.kjson%22%20AND%20a:%22kjson-pointer%22)
 
 Kotlin implementation of [JSON Pointer](https://tools.ietf.org/html/rfc6901).
@@ -286,25 +286,25 @@ And again, if the property is present but of the wrong type, a detailed exceptio
 
 ## Dependency Specification
 
-The latest version of the library is 8.6, and it may be obtained from the Maven Central repository.
+The latest version of the library is 8.7, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>8.6</version>
+      <version>8.7</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:8.6'
+    implementation 'io.kjson:kjson-pointer:8.7'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:8.6")
+    implementation("io.kjson:kjson-pointer:8.7")
 ```
 
 Peter Wall
 
-2024-12-13
+2025-02-01
