@@ -42,19 +42,19 @@ class JSONReferenceTest {
 
     @Test fun `should create JSONReference with given pointer`() {
         val testReference = JSONPointer.root ref testString
-        testReference.base shouldBeSameInstance testString
+        testReference.base shouldBe testString
         testReference.pointer shouldBe JSONPointer.root
         testReference.valid shouldBe true
-        testReference.value shouldBeSameInstance testString
+        testReference.value shouldBe testString
         testReference.toString() shouldBe "\"test1\""
     }
 
     @Test fun `should create JSONReference with default pointer`() {
         val testReference = JSONReference(testString)
-        testReference.base shouldBeSameInstance testString
+        testReference.base shouldBe testString
         testReference.pointer shouldBe JSONPointer.root
         testReference.valid shouldBe true
-        testReference.value shouldBeSameInstance testString
+        testReference.value shouldBe testString
         testReference.toString() shouldBe "\"test1\""
     }
 

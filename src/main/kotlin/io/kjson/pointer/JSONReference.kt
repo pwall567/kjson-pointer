@@ -2,7 +2,7 @@
  * @(#) JSONReference.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2021, 2023, 2024 Peter Wall
+ * Copyright (c) 2021, 2023, 2024, 2025 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -87,17 +87,22 @@ class JSONReference internal constructor(
     }
 
     fun locateChild(target: JSONValue?): JSONReference? {
-        when {
-            value === target -> return this
-            value is JSONObject -> {
+        when (value) {
+            is JSONObject -> {
+                if (value === target)
+                    return this
                 for (key in value.keys) {
                     child(key).locateChild(target)?.let { return it }
                 }
             }
-            value is JSONArray -> {
+            is JSONArray -> {
+                if (value === target)
+                    return this
                 for (i in value.indices)
                     child(i).locateChild(target)?.let { return it }
             }
+            target -> return this
+            else -> {}
         }
         return null
     }

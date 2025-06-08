@@ -49,9 +49,9 @@ class JSONRefTest {
 
     @Test fun `should create JSONRef`() {
         val ref1 = JSONRef(testString)
-        ref1.base shouldBeSameInstance testString
+        ref1.base shouldBe testString
         ref1.pointer shouldBe JSONPointer.root
-        ref1.node shouldBeSameInstance testString
+        ref1.node shouldBe testString
     }
 
     @Test fun `should navigate back to parent`() {
@@ -243,6 +243,18 @@ class JSONRefTest {
             shouldBeType<JSONObject>()
             this["b"].asInt shouldBe 123
         }
+    }
+
+    @Test fun `should rebase reference`() {
+        val json = JSON.parseObject("""{"a":{"b":123}}""")
+        val ref = JSONRef(json)
+        val refChild = ref.child<JSONObject>("a")
+        refChild.pointer shouldBe JSONPointer("/a")
+        refChild.base shouldBeSameInstance json
+        val rebased = refChild.rebase()
+        rebased.pointer shouldBe JSONPointer.root
+        rebased.base shouldBeSameInstance refChild.node
+        refChild.node shouldBeSameInstance rebased.node
     }
 
 }

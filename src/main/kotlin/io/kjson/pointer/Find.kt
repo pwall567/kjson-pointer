@@ -2,7 +2,7 @@
  * @(#) Find.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2024 Peter Wall
+ * Copyright (c) 2024, 2025 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -183,20 +183,26 @@ internal fun checkNumber(token: String): Boolean {
  * Locate the specified target [JSONValue] in the base [JSONValue], and return a [JSONPointer] pointing to it, based
  * on the current pointer.  Returns `null` if not found.
  *
- * This will perform a depth-first search of the JSON structure.
+ * This will perform a depth-first search of the JSON structure, and because it is not possible to distinguish between
+ * two instances of, say, `JSONBoolean.TRUE`, the function may not be successful in locating a primitive value.
  */
 fun JSONPointer.locateChild(base: JSONValue?, target: JSONValue?): JSONPointer? {
-    when {
-        base === target -> return this
-        base is JSONObject -> {
+    when (base) {
+        is JSONObject -> {
+            if (base === target)
+                return this
             for (key in base.keys) {
                 child(key).locateChild(base[key], target)?.let { return it }
             }
         }
-        base is JSONArray -> {
+        is JSONArray -> {
+            if (base === target)
+                return this
             for (i in base.indices)
                 child(i).locateChild(base[i], target)?.let { return it }
         }
+        target -> return this
+        else -> {}
     }
     return null
 }

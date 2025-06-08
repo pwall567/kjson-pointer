@@ -3,7 +3,7 @@
 [![Build Status](https://github.com/pwall567/kjson-pointer/actions/workflows/build.yml/badge.svg)](https://github.com/pwall567/kjson-pointer/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Kotlin](https://img.shields.io/static/v1?label=Kotlin&message=v2.0.21&color=7f52ff&logo=kotlin&logoColor=7f52ff)](https://github.com/JetBrains/kotlin/releases/tag/v2.0.21)
-[![Maven Central](https://img.shields.io/maven-central/v/io.kjson/kjson-pointer?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.kjson%22%20AND%20a:%22kjson-pointer%22)
+[![Maven Central](https://img.shields.io/maven-central/v/io.kjson/kjson-pointer?label=Maven%20Central)](https://central.sonatype.com/artifact/io.kjson/kjson-pointer)
 
 Kotlin implementation of [JSON Pointer](https://tools.ietf.org/html/rfc6901).
 
@@ -99,11 +99,13 @@ location:
         val value = obj[pointer]
 ```
 
-To create a pointer to a specified child value within a structure:
+To locate a specified child value within a structure:
 ```kotlin
         val childPointer = pointer.locateChild(structure, target)
 ```
-(This will perform a depth-first search of the JSON structure, so it should be used only when there is no alternative.)
+This will perform a depth-first search of the JSON structure, so it should be used only when there is no alternative.
+Also, because it is not possible to distinguish between two instances of, say, `JSONBoolean.TRUE`, the function may not
+be successful in locating a primitive value.
 
 
 ### `JSONReference`
@@ -146,11 +148,13 @@ To test whether the reference has a nominated child:
         }
 ```
 
-To create a reference to a specified target child value:
+To locate a specified target child value:
 ```kotlin
         val childRef = baseRef.locateChild(target)
 ```
-(This will perform a depth-first search of the JSON structure, so it should be used only when there is no alternative.)
+This will perform a depth-first search of the JSON structure, so it should be used only when there is no alternative.
+Also, because it is not possible to distinguish between two instances of, say, `JSONBoolean.TRUE`, the function may not
+be successful in locating a primitive value.
 
 
 ### `JSONRef`
@@ -223,6 +227,18 @@ To navigate to the parent node:
 ```
 In this example, `parentRef` will now be identical to the original `ref`.
 
+To locate a specified target child value:
+```kotlin
+        val childRef = baseRef.locateChild(target)
+```
+The result will be a `JSONRef` parameterised by the type of the `target`, that is, if `target` is a `JSONObject`, the
+result will be a `JSONRef<JSONObject>?`.
+
+The function will perform a depth-first search of the JSON structure, so it should be used only when there is no
+alternative.
+Also, because it is not possible to distinguish between two instances of, say, `JSONBoolean.TRUE`, the function may not
+be successful in locating a primitive value.
+
 
 #### Iteration
 
@@ -286,25 +302,25 @@ And again, if the property is present but of the wrong type, a detailed exceptio
 
 ## Dependency Specification
 
-The latest version of the library is 8.8, and it may be obtained from the Maven Central repository.
+The latest version of the library is 8.9, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>8.8</version>
+      <version>8.9</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:8.8'
+    implementation 'io.kjson:kjson-pointer:8.9'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:8.8")
+    implementation("io.kjson:kjson-pointer:8.9")
 ```
 
 Peter Wall
 
-2025-02-06
+2025-06-07

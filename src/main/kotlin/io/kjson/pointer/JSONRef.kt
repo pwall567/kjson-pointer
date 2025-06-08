@@ -2,7 +2,7 @@
  * @(#) JSONRef.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2022, 2023, 2024 Peter Wall
+ * Copyright (c) 2022, 2023, 2024, 2025 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -103,22 +103,28 @@ class JSONRef<out J : JSONValue?> internal constructor(
      * Locate the specified target [JSONValue] in the structure below this reference and return a reference to it, or
      * `null` if not found.
      *
-     * This will perform a depth-first search of the JSON structure.
+     * This will perform a depth-first search of the JSON structure, and because it is not possible to distinguish
+     * between two instances of, say, `JSONBoolean.TRUE`, the function may not be successful in locating a primitive
+     * value.
      */
     @Suppress("UNCHECKED_CAST")
     fun <T : JSONValue> locateChild(target: T): JSONRef<T>? {
-        when {
-            node === target -> return this as JSONRef<T>
-            node is JSONObject -> {
+        when (node) {
+            is JSONObject -> {
+                if (node === target)
+                    return this as JSONRef<T>
                 val refObject = asRef<JSONObject>()
                 for (key in node.keys)
                     refObject.child<JSONValue>(key).locateChild(target)?.let { return it }
             }
-            node is JSONArray -> {
+            is JSONArray -> {
+                if (node === target)
+                    return this as JSONRef<T>
                 val refArray = asRef<JSONArray>()
                 for (i in node.indices)
                     refArray.child<JSONValue>(i).locateChild(target)?.let { return it }
             }
+            target -> return this as JSONRef<T>
         }
         return null
     }
@@ -136,6 +142,11 @@ class JSONRef<out J : JSONValue?> internal constructor(
      * Test whether reference refers to a nominated type.
      */
     inline fun <reified T : JSONValue?> isRef(): Boolean = node is T
+
+    /**
+     * Create a new reference with the current node as the base.
+     */
+    fun rebase(): JSONRef<J> = JSONRef(node)
 
     override fun equals(other: Any?): Boolean = this === other ||
             other is JSONRef<*> && base === other.base && node === other.node && pointer == other.pointer

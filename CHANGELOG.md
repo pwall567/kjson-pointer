@@ -2,6 +2,13 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.9] - 2025-06-07
+### Changed
+- `JSONRef`: added `rebase()`
+- `JSONRef`, `JSONReference`, `Find`: modified `locateChild()` functions (identity comparisons not applicable on enums
+  and value classes)
+- `pom.xml`: updated dependency versions
+
 ## [8.8] - 2025-02-06
 ### Changed
 - `pom.xml`: updated dependency version
