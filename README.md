@@ -227,6 +227,16 @@ To navigate to the parent node:
 ```
 In this example, `parentRef` will now be identical to the original `ref`.
 
+To create a new `JSONRef` with the current node as the base:
+```kotlin
+    val rebasedRef = addressRef.rebase()
+```
+In the new `JSONRef`, both the base node and the current node will be set to the current node of the original, and the
+parameterised type will be the same as the original.
+The pointer will be `JSONPointer.root`, so the effect will be to isolate a subtree of the original JSON structure.
+
+#### Search
+
 To locate a specified target child value:
 ```kotlin
         val childRef = baseRef.locateChild(target)
