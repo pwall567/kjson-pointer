@@ -312,25 +312,25 @@ And again, if the property is present but of the wrong type, a detailed exceptio
 
 ## Dependency Specification
 
-The latest version of the library is 8.9, and it may be obtained from the Maven Central repository.
+The latest version of the library is 8.10, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>8.9</version>
+      <version>8.10</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:8.9'
+    implementation 'io.kjson:kjson-pointer:8.10'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:8.9")
+    implementation("io.kjson:kjson-pointer:8.10")
 ```
 
 Peter Wall
 
-2025-06-07
+2025-06-09

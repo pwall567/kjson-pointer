@@ -2,6 +2,10 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.10] - 2025-06-09
+### Changed
+- `pom.xml`: updated dependency version
+
 ## [8.9] - 2025-06-07
 ### Changed
 - `JSONRef`: added `rebase()`
