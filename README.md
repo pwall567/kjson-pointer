@@ -280,10 +280,29 @@ and the `asRef()` function converts to a specified type, throwing an exception i
 ```
 
 
+#### Typed Properties
+
+There are a number of functions provided as extension functions on `JSONRef<JSONObject>` to simplify access to the
+properties of the object:
+
+- `childString(name)`: returns the `String` value of the named property
+- `childInt(name)`: returns the `Int` value of the named property
+- `childLong(name)`: returns the `Long` value of the named property
+- `childDecimal(name)`: returns the `BigDecimal` value of the named property
+- `childBoolean(name)`: returns the `Boolean` value of the named property
+
+In all cases, if the property is not found an exception will be thrown showing the property name, or if the property is
+found but is not of the required type, an exception will be thrown detailing the expected type, the actual value and the
+location in the structure, in `JSONPointer` form.
+
+These are more than just convenience functions for functionality that is available in other ways; `childString('name")`
+is more efficient than `child<JSONString>("name").value`.
+
+
 #### Optional Properties
 
-There are a number of functions provided as extension functions on `JSONRef<JSONObject>` to simplify access to optional
-properties of the object:
+There are also a number of functions provided as extension functions on `JSONRef<JSONObject>` to simplify access to
+optional properties of the object:
 
 - `optionalString(name)`: returns the `String` value of the named property, or `null` if it is not present
 - `optionalInt(name)`: returns the `Int` value of the named property, or `null` if it is not present
@@ -291,7 +310,7 @@ properties of the object:
 - `optionalDecimal(name)`: returns the `BigDecimal` value of the named property, or `null` if it is not present
 - `optionalBoolean(name)`: returns the `Boolean` value of the named property, or `null` if it is not present
 
-In all cases, if the property is not of the required type, an exception is thrown detailing the expected type, the
+In these cases, if the property is not of the required type, an exception is thrown detailing the expected type, the
 actual value and the location in the structure, in `JSONPointer` form.
 
 When the optional property is a nested sub-structure, the `optionalChild()` function may be used:
@@ -310,27 +329,29 @@ And to execute a block of code conditionally, depending on the presence of an op
 ```
 And again, if the property is present but of the wrong type, a detailed exception is thrown.
 
+
+
 ## Dependency Specification
 
-The latest version of the library is 8.10, and it may be obtained from the Maven Central repository.
+The latest version of the library is 8.11, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>8.10</version>
+      <version>8.11</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:8.10'
+    implementation 'io.kjson:kjson-pointer:8.11'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:8.10")
+    implementation("io.kjson:kjson-pointer:8.11")
 ```
 
 Peter Wall
 
-2025-06-09
+2025-11-12

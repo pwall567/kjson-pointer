@@ -2,6 +2,12 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [Unreleased]
+### Changed
+- `pom.xml`: changed parent POM to `io.kstuff:kstuff-maven:2.0` and added `groupId`
+- `deploy.yml`: switched upload target to `central`
+- `Extension.kt`: added `childString()`, `childBoolean()`, `childInt()`, `childLong()` and `childDecimal()`
+
 ## [8.10] - 2025-06-09
 ### Changed
 - `pom.xml`: updated dependency version
