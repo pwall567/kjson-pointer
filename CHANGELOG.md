@@ -2,6 +2,10 @@
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.12] - 2025-11-13
+### Changed
+- `Extension.kt`: code clean-up
+
 ## [8.11] - 2025-11-12
 ### Changed
 - `pom.xml`: changed parent POM to `io.kstuff:kstuff-maven:2.0` and added `groupId`

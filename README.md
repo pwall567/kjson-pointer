@@ -295,7 +295,7 @@ In all cases, if the property is not found an exception will be thrown showing t
 found but is not of the required type, an exception will be thrown detailing the expected type, the actual value and the
 location in the structure, in `JSONPointer` form.
 
-These are more than just convenience functions for functionality that is available in other ways; `childString('name")`
+These are more than just convenience functions for functionality that is available in other ways; `childString("name")`
 is more efficient than `child<JSONString>("name").value`.
 
 
@@ -333,25 +333,25 @@ And again, if the property is present but of the wrong type, a detailed exceptio
 
 ## Dependency Specification
 
-The latest version of the library is 8.11, and it may be obtained from the Maven Central repository.
+The latest version of the library is 8.12, and it may be obtained from the Maven Central repository.
 
 ### Maven
 ```xml
     <dependency>
       <groupId>io.kjson</groupId>
       <artifactId>kjson-pointer</artifactId>
-      <version>8.11</version>
+      <version>8.12</version>
     </dependency>
 ```
 ### Gradle
 ```groovy
-    implementation 'io.kjson:kjson-pointer:8.11'
+    implementation 'io.kjson:kjson-pointer:8.12'
 ```
 ### Gradle (kts)
 ```kotlin
-    implementation("io.kjson:kjson-pointer:8.11")
+    implementation("io.kjson:kjson-pointer:8.12")
 ```
 
 Peter Wall
 
-2025-11-12
+2025-11-13
