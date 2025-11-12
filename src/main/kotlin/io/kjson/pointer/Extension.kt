@@ -2,7 +2,7 @@
  * @(#) Extension.kt
  *
  * kjson-pointer  JSON Pointer for Kotlin
- * Copyright (c) 2022, 2023, 2024 Peter Wall
+ * Copyright (c) 2022, 2023, 2024, 2025 Peter Wall
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,9 +32,6 @@ import io.kjson.JSONObject
 import io.kjson.JSONString
 import io.kjson.JSONValue
 import io.kjson.JSONBoolean
-import io.kjson.JSONDecimal
-import io.kjson.JSONInt
-import io.kjson.JSONLong
 import io.kjson.JSONNumber
 import io.kjson.JSONPrimitive
 import io.kjson.JSON.typeError
@@ -114,60 +111,83 @@ inline fun <reified T : JSONValue?, R : Any> JSONRef<JSONObject>.mapIfPresent(na
         block: JSONRef<T>.(T) -> R): R? = if (hasChild<T>(name)) child<T>(name).let { it.block(it.node) } else null
 
 /**
+ * Get a [String] property from a [JSONObject] using `this` [JSONRef] and the specified key (throws an exception if the
+ * property is not present or is the wrong type).
+ */
+fun JSONRef<JSONObject>.childString(name: String): String = if (node.containsKey(name)) node[name].let {
+    if (it is JSONString) it.value else it.typeError("String", pointer.child(name))
+} else pointer.throwInvalidPropertyName(name)
+
+/**
  * Get a [String] property from a [JSONObject] using `this` [JSONRef] and the specified key, or `null` if the property
  * is not present (throws an exception if the property is present but is the wrong type).
  */
 fun JSONRef<JSONObject>.optionalString(name: String): String? = node[name]?.let {
-    when (it) {
-        is JSONString -> it.value
-        else -> it.typeError("String", pointer.child(name))
-    }
+    if (it is JSONString) it.value else it.typeError("String", pointer.child(name))
 }
+
+/**
+ * Get a [Boolean] property from a [JSONObject] using `this` [JSONRef] and the specified key (throws an exception if the
+ * property is not present or is the wrong type).
+ */
+fun JSONRef<JSONObject>.childBoolean(name: String): Boolean = if (node.containsKey(name)) node[name].let {
+    if (it is JSONBoolean) it.value else it.typeError("Boolean", pointer.child(name))
+} else pointer.throwInvalidPropertyName(name)
 
 /**
  * Get a [Boolean] property from a [JSONObject] using `this` [JSONRef] and the specified key, or `null` if the property
  * is not present (throws an exception if the property is present but is the wrong type).
  */
 fun JSONRef<JSONObject>.optionalBoolean(name: String): Boolean? = node[name]?.let {
-    when (it) {
-        is JSONBoolean -> it.value
-        else -> it.typeError("Boolean", pointer.child(name))
-    }
+    if (it is JSONBoolean) it.value else it.typeError("Boolean", pointer.child(name))
 }
+
+/**
+ * Get an [Int] property from a [JSONObject] using `this` [JSONRef] and the specified key (throws an exception if the
+ * property is not present or is the wrong type).
+ */
+fun JSONRef<JSONObject>.childInt(name: String): Int = if (node.containsKey(name)) node[name].let {
+    if (it is JSONNumber && it.isInt()) it.toInt() else it.typeError("Int", pointer.child(name))
+} else pointer.throwInvalidPropertyName(name)
 
 /**
  * Get an [Int] property from a [JSONObject] using `this` [JSONRef] and the specified key, or `null` if the property is
  * not present (throws an exception if the property is present but is the wrong type).
  */
 fun JSONRef<JSONObject>.optionalInt(name: String): Int? = node[name]?.let {
-    when {
-        it is JSONNumber && it.isInt() -> it.toInt()
-        else -> it.typeError("Int", pointer.child(name))
-    }
+    if (it is JSONNumber && it.isInt()) it.toInt() else it.typeError("Int", pointer.child(name))
 }
+
+/**
+ * Get a [Long] property from a [JSONObject] using `this` [JSONRef] and the specified key (throws an exception if the
+ * property is not present or is the wrong type).
+ */
+fun JSONRef<JSONObject>.childLong(name: String): Long = if (node.containsKey(name)) node[name].let {
+    if (it is JSONNumber && it.isLong()) it.toLong() else it.typeError("Long", pointer.child(name))
+} else pointer.throwInvalidPropertyName(name)
 
 /**
  * Get a [Long] property from a [JSONObject] using `this` [JSONRef] and the specified key, or `null` if the property is
  * not present (throws an exception if the property is present but is not an [Int] or [Long]).
  */
 fun JSONRef<JSONObject>.optionalLong(name: String): Long? = node[name]?.let {
-    when {
-        it is JSONNumber && it.isLong() -> it.toLong()
-        else -> it.typeError("Long", pointer.child(name))
-    }
+    if (it is JSONNumber && it.isLong()) it.toLong() else it.typeError("Long", pointer.child(name))
 }
+
+/**
+ * Get a [BigDecimal] property from a [JSONObject] using `this` [JSONRef] and the specified key (throws an exception if
+ * the property is not present or is the wrong type).
+ */
+fun JSONRef<JSONObject>.childDecimal(name: String): BigDecimal = if (node.containsKey(name)) node[name].let {
+    if (it is JSONNumber) it.toDecimal() else it.typeError("Decimal", pointer.child(name))
+} else pointer.throwInvalidPropertyName(name)
 
 /**
  * Get a [BigDecimal] property from a [JSONObject] using `this` [JSONRef] and the specified key, or `null` if the
  * property is not present (throws an exception if the property is present but is the wrong type).
  */
 fun JSONRef<JSONObject>.optionalDecimal(name: String): BigDecimal? = node[name]?.let {
-    when (it) {
-        is JSONInt -> BigDecimal(it.value.toLong())
-        is JSONLong -> BigDecimal(it.value)
-        is JSONDecimal -> it.value
-        else -> it.typeError("Decimal", pointer.child(name))
-    }
+    if (it is JSONNumber) it.toDecimal() else it.typeError("Decimal", pointer.child(name))
 }
 
 /**

@@ -544,4 +544,149 @@ class ExtensionTest {
         ref4.node shouldBeSameInstance testObject
     }
 
+    @Test fun `should get String using childString`() {
+        val json = JSONObject.build {
+            add("field1", "xyz")
+        }
+        val ref = json.ref()
+        ref.childString("field1") shouldBe "xyz"
+    }
+
+    @Test fun `should throw exception on childString with incorrect name`() {
+        val json = JSONObject.build {
+            add("field1", "xyz")
+        }
+        val ref = json.ref()
+        shouldThrow<JSONPointerException>("Can't locate JSON property \"field2\"") {
+            ref.childString("field2")
+        }.let {
+            it.pointer shouldBe JSONPointer.root
+        }
+    }
+
+    @Test fun `should throw exception on childString with incorrect type`() {
+        val json = JSONObject.build {
+            add("field1", 123)
+        }
+        val ref = json.ref()
+        shouldThrow<JSONTypeException>("Node not correct type (String), was 123, at /field1") {
+            ref.childString("field1")
+        }.let {
+            it.nodeName shouldBe "Node"
+            it.expected shouldBe "String"
+            it.value shouldBe JSONInt(123)
+            it.key shouldBe JSONPointer("/field1")
+        }
+    }
+
+    @Test fun `should get Boolean using childBoolean`() {
+        val ref = testObject.ref()
+        ref.childBoolean("field3") shouldBe true
+    }
+
+    @Test fun `should throw exception on childBoolean with incorrect name`() {
+        val ref = testObject.ref()
+        shouldThrow<JSONPointerException>("Can't locate JSON property \"field33\"") {
+            ref.childBoolean("field33")
+        }.let {
+            it.pointer shouldBe JSONPointer.root
+        }
+    }
+
+    @Test fun `should throw exception on childBoolean with incorrect type`() {
+        val ref = testObject.ref()
+        shouldThrow<JSONTypeException>("Node not correct type (Boolean), was 123, at /field1") {
+            ref.childBoolean("field1")
+        }.let {
+            it.nodeName shouldBe "Node"
+            it.expected shouldBe "Boolean"
+            it.value shouldBe JSONInt(123)
+            it.key shouldBe JSONPointer("/field1")
+        }
+    }
+
+    @Test fun `should get Int using childInt`() {
+        val ref = testObject.ref()
+        ref.childInt("field1") shouldBe 123
+    }
+
+    @Test fun `should throw exception on childInt with incorrect name`() {
+        val ref = testObject.ref()
+        shouldThrow<JSONPointerException>("Can't locate JSON property \"field33\"") {
+            ref.childInt("field33")
+        }.let {
+            it.pointer shouldBe JSONPointer.root
+        }
+    }
+
+    @Test fun `should throw exception on childInt with incorrect type`() {
+        val ref = testObject.ref()
+        shouldThrow<JSONTypeException>("Node not correct type (Int), was true, at /field3") {
+            ref.childInt("field3")
+        }.let {
+            it.nodeName shouldBe "Node"
+            it.expected shouldBe "Int"
+            it.value shouldBe JSONBoolean.TRUE
+            it.key shouldBe JSONPointer("/field3")
+        }
+    }
+
+    @Test fun `should get Long using childLong`() {
+        val json = JSONObject.build {
+            add("field1", 1234567890123456789)
+        }
+        val ref = json.ref()
+        ref.childLong("field1") shouldBe 1234567890123456789
+    }
+
+    @Test fun `should throw exception on childLong with incorrect name`() {
+        val ref = testObject.ref()
+        shouldThrow<JSONPointerException>("Can't locate JSON property \"field33\"") {
+            ref.childLong("field33")
+        }.let {
+            it.pointer shouldBe JSONPointer.root
+        }
+    }
+
+    @Test fun `should throw exception on childLong with incorrect type`() {
+        val ref = testObject.ref()
+        shouldThrow<JSONTypeException>("Node not correct type (Long), was true, at /field3") {
+            ref.childLong("field3")
+        }.let {
+            it.nodeName shouldBe "Node"
+            it.expected shouldBe "Long"
+            it.value shouldBe JSONBoolean.TRUE
+            it.key shouldBe JSONPointer("/field3")
+        }
+    }
+
+    @Test fun `should get BigDecimal using childDecimal`() {
+        val json = JSONObject.build {
+            add("field1", BigDecimal("123.45"))
+        }
+        val ref = json.ref()
+        ref.childDecimal("field1") shouldBe BigDecimal("123.45")
+    }
+
+    @Test fun `should throw exception on childDecimal with incorrect name`() {
+        val ref = testObject.ref()
+        shouldThrow<JSONPointerException>("Can't locate JSON property \"field33\"") {
+            ref.childDecimal("field33")
+        }.let {
+            it.pointer shouldBe JSONPointer.root
+        }
+    }
+
+    @Test fun `should throw exception on childDecimal with incorrect type`() {
+        val ref = testObject.ref()
+        shouldThrow<JSONTypeException>("Node not correct type (Decimal), was true, at /field3") {
+            ref.childDecimal("field3")
+        }.let {
+            it.nodeName shouldBe "Node"
+            it.expected shouldBe "Decimal"
+            it.value shouldBe JSONBoolean.TRUE
+            it.key shouldBe JSONPointer("/field3")
+        }
+    }
+
 }
